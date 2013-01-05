@@ -8,9 +8,21 @@ import (
 )
 
 // An Options represents optional configuration parameters for formatting.
+//
+// Some options, notably ShortList, dramatically increase the overhead
+// of pretty-printing a value.
 type Options struct {
 	Compact  bool // One-line output. Overrides Diffable.
-	Diffable bool // Adds extra newlines for more easily diffable output
+	Diffable bool // Adds extra newlines for more easily diffable output.
+
+	ShortList int // Maximum character length for short lists if nonzero.
+}
+
+var DefaultOptions = &Options{}
+
+func (o *Options) dup() *Options {
+	o2 := *o
+	return &o2
 }
 
 type node interface {
@@ -63,6 +75,7 @@ func (l keyvals) WriteTo(w io.Writer, indent string, opts *Options) {
 	}
 	padding := strings.Repeat(" ", keyWidth+1)
 
+	inner := indent + "  " + padding
 	fmt.Fprintf(w, "{")
 	for i, kv := range l {
 		if opts.Compact {
@@ -73,7 +86,7 @@ func (l keyvals) WriteTo(w io.Writer, indent string, opts *Options) {
 			}
 			fmt.Fprintf(w, "%s:%s", kv.key, padding[len(kv.key):])
 		}
-		kv.val.WriteTo(w, indent+"  "+padding, opts)
+		kv.val.WriteTo(w, inner, opts)
 		if i+1 < len(l) || opts.Diffable {
 			fmt.Fprintf(w, ",")
 		}
@@ -87,6 +100,14 @@ func (l keyvals) WriteTo(w io.Writer, indent string, opts *Options) {
 type list []node
 
 func (l list) WriteTo(w io.Writer, indent string, opts *Options) {
+	if max := opts.ShortList; max > 0 {
+		short := compactString(l)
+		if len(short) <= max {
+			fmt.Fprintf(w, short)
+			return
+		}
+	}
+
 	inner := indent + " "
 	fmt.Fprintf(w, "[")
 	for i, v := range l {

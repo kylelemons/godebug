@@ -139,6 +139,29 @@ func TestCompactString(t *testing.T) {
 			},
 			`{name:"zaphod",age:42}`,
 		},
+		{
+			list{
+				list{
+					rawVal("0"),
+					rawVal("1"),
+					rawVal("2"),
+					rawVal("3"),
+				},
+				list{
+					rawVal("1"),
+					rawVal("2"),
+					rawVal("3"),
+					rawVal("0"),
+				},
+				list{
+					rawVal("2"),
+					rawVal("3"),
+					rawVal("0"),
+					rawVal("1"),
+				},
+			},
+			`[[0,1,2,3],[1,2,3,0],[2,3,0,1]]`,
+		},
 	}
 
 	for _, test := range tests {
@@ -147,3 +170,79 @@ func TestCompactString(t *testing.T) {
 		}
 	}
 }
+
+func TestShortList(t *testing.T) {
+	opts := &Options{
+		ShortList: 16,
+	}
+
+	tests := []struct {
+		node
+		want string
+	}{
+		{
+			list{
+				list{
+					rawVal("0"),
+					rawVal("1"),
+					rawVal("2"),
+					rawVal("3"),
+				},
+				list{
+					rawVal("1"),
+					rawVal("2"),
+					rawVal("3"),
+					rawVal("0"),
+				},
+				list{
+					rawVal("2"),
+					rawVal("3"),
+					rawVal("0"),
+					rawVal("1"),
+				},
+			},
+			`[[0,1,2,3],
+ [1,2,3,0],
+ [2,3,0,1]]`,
+		},
+	}
+
+	for _, test := range tests {
+		buf := new(bytes.Buffer)
+		test.node.WriteTo(buf, "", opts)
+		if got, want := buf.String(), test.want; got != want {
+			t.Errorf("%#v: got:\n%s\nwant:\n%s", test.node, got, want)
+		}
+	}
+}
+
+var benchNode = keyvals{
+	{"list", list{
+		rawVal("0"),
+		rawVal("1"),
+		rawVal("2"),
+		rawVal("3"),
+	}},
+	{"keyvals", keyvals{
+		{"a", stringVal("b")},
+		{"c", stringVal("e")},
+		{"d", stringVal("f")},
+	}},
+}
+
+func benchOpts(b *testing.B, opts *Options) {
+	buf := new(bytes.Buffer)
+	benchNode.WriteTo(buf, "", opts)
+	b.SetBytes(int64(buf.Len()))
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		buf.Reset()
+		benchNode.WriteTo(buf, "", opts)
+	}
+}
+
+func BenchmarkWriteDefault(b *testing.B)   { benchOpts(b, DefaultOptions) }
+func BenchmarkWriteShortList(b *testing.B) { benchOpts(b, &Options{ShortList: 16}) }
+func BenchmarkWriteCompact(b *testing.B)   { benchOpts(b, &Options{Compact: true}) }
+func BenchmarkWriteDiffable(b *testing.B)  { benchOpts(b, &Options{Diffable: true}) }

@@ -7,13 +7,11 @@ import (
 	"sort"
 )
 
-var defaultOptions = &Options{}
-
 // Reflect returns the string representation of the given value with the given
-// options.  If opts is nil, the default options are used.
+// options.  If opts is nil, the DefaultOptions are used.
 func Reflect(val interface{}, opts *Options) string {
 	if opts == nil {
-		opts = defaultOptions
+		opts = DefaultOptions
 	}
 
 	node := val2node(reflect.ValueOf(val))
@@ -83,7 +81,14 @@ func val2node(val reflect.Value) node {
 	return rawVal(val.String())
 }
 
-// Print writes the default representation of the given value to standard output.
-func Print(val interface{}) {
-	fmt.Println(Reflect(val, nil))
+// Print writes the default representation of the given values to standard output.
+func Print(vals ...interface{}) {
+	DefaultOptions.Print(vals...)
+}
+
+// Print writes the configured presentation of the given values to standard output.
+func (o *Options) Print(vals ...interface{}) {
+	for _, val := range vals {
+		fmt.Println(Reflect(val, o))
+	}
 }
