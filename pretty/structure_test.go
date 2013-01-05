@@ -105,9 +105,45 @@ func TestWriteTo(t *testing.T) {
 			t.Errorf("%s: normal rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
 		buf.Reset()
-		test.node.WriteTo(buf, "", &Options{Extended: true})
+		test.node.WriteTo(buf, "", &Options{Diffable: true})
 		if got, want := buf.String(), test.extended; got != want {
 			t.Errorf("%s: extended rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
+		}
+	}
+}
+
+func TestCompactString(t *testing.T) {
+	tests := []struct {
+		node
+		compact string
+	}{
+		{
+			stringVal("abc"),
+			"abc",
+		},
+		{
+			rawVal("2"),
+			"2",
+		},
+		{
+			list{
+				rawVal("2"),
+				rawVal("3"),
+			},
+			"[2,3]",
+		},
+		{
+			keyvals{
+				{"name", stringVal("zaphod")},
+				{"age", rawVal("42")},
+			},
+			`{name:"zaphod",age:42}`,
+		},
+	}
+
+	for _, test := range tests {
+		if got, want := compactString(test.node), test.compact; got != want {
+			t.Errorf("%#v: compact = %q, want %q", test.node, got, want)
 		}
 	}
 }

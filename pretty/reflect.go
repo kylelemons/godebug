@@ -9,6 +9,8 @@ import (
 
 var defaultOptions = &Options{}
 
+// Reflect returns the string representation of the given value with the given
+// options.  If opts is nil, the default options are used.
 func Reflect(val interface{}, opts *Options) string {
 	if opts == nil {
 		opts = defaultOptions
@@ -44,7 +46,7 @@ func val2node(val reflect.Value) node {
 		keys := val.MapKeys()
 		for _, key := range keys {
 			// TODO(kevlar): Support arbitrary type keys?
-			n = append(n, keyval{key.String(), val2node(val.MapIndex(key))})
+			n = append(n, keyval{compactString(val2node(key)), val2node(val.MapIndex(key))})
 		}
 		sort.Sort(n)
 		return n
@@ -81,6 +83,7 @@ func val2node(val reflect.Value) node {
 	return rawVal(val.String())
 }
 
+// Print writes the default representation of the given value to standard output.
 func Print(val interface{}) {
 	fmt.Println(Reflect(val, nil))
 }

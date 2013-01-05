@@ -38,6 +38,19 @@ func TestReflect(t *testing.T) {
 			},
 		},
 		{
+			"map of [2]int",
+			map[[2]int]string{
+				[2]int{-1, 2}: "school",
+				[2]int{0, 0}:  "origin",
+				[2]int{1, 3}:  "home",
+			},
+			keyvals{
+				{"[-1,2]", stringVal("school")},
+				{"[0,0]", stringVal("origin")},
+				{"[1,3]", stringVal("home")},
+			},
+		},
+		{
 			"struct",
 			struct{ zaphod, ford string }{"beeblebrox", "prefect"},
 			keyvals{

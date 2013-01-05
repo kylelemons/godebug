@@ -1,20 +1,33 @@
 package pretty
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
 )
 
+// An Options represents optional configuration parameters for formatting.
 type Options struct {
-	Extended bool
-
-	// TODO(kevlar): implement:
-	//QuoteKeys bool
+	Compact  bool // One-line output. Overrides Diffable.
+	Diffable bool // Adds extra newlines for more easily diffable output
 }
 
 type node interface {
 	WriteTo(w io.Writer, indent string, opts *Options)
+}
+
+func compactString(n node) string {
+	switch k := n.(type) {
+	case stringVal:
+		return string(k)
+	case rawVal:
+		return string(k)
+	}
+
+	buf := new(bytes.Buffer)
+	n.WriteTo(buf, "", &Options{Compact: true})
+	return buf.String()
 }
 
 type stringVal string
@@ -52,16 +65,20 @@ func (l keyvals) WriteTo(w io.Writer, indent string, opts *Options) {
 
 	fmt.Fprintf(w, "{")
 	for i, kv := range l {
-		if i > 0 || opts.Extended {
-			fmt.Fprintf(w, "\n%s ", indent)
+		if opts.Compact {
+			fmt.Fprintf(w, "%s:", kv.key)
+		} else {
+			if i > 0 || opts.Diffable {
+				fmt.Fprintf(w, "\n%s ", indent)
+			}
+			fmt.Fprintf(w, "%s:%s", kv.key, padding[len(kv.key):])
 		}
-		fmt.Fprintf(w, "%s:%s", kv.key, padding[len(kv.key):])
 		kv.val.WriteTo(w, indent+"  "+padding, opts)
-		if i+1 < len(l) || opts.Extended {
+		if i+1 < len(l) || opts.Diffable {
 			fmt.Fprintf(w, ",")
 		}
 	}
-	if opts.Extended && len(l) > 0 {
+	if !opts.Compact && opts.Diffable && len(l) > 0 {
 		fmt.Fprintf(w, "\n%s", indent)
 	}
 	fmt.Fprintf(w, "}")
@@ -73,15 +90,15 @@ func (l list) WriteTo(w io.Writer, indent string, opts *Options) {
 	inner := indent + " "
 	fmt.Fprintf(w, "[")
 	for i, v := range l {
-		if i > 0 || opts.Extended {
+		if !opts.Compact && (i > 0 || opts.Diffable) {
 			fmt.Fprintf(w, "\n%s", inner)
 		}
 		v.WriteTo(w, inner, opts)
-		if i+1 < len(l) || opts.Extended {
+		if i+1 < len(l) || opts.Diffable {
 			fmt.Fprintf(w, ",")
 		}
 	}
-	if opts.Extended && len(l) > 0 {
+	if !opts.Compact && opts.Diffable && len(l) > 0 {
 		fmt.Fprintf(w, "\n%s", indent)
 	}
 	fmt.Fprintf(w, "]")
