@@ -2,8 +2,8 @@ package pretty
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -45,13 +45,13 @@ func compactString(n node) string {
 type stringVal string
 
 func (str stringVal) WriteTo(w io.Writer, indent string, opts *Options) {
-	fmt.Fprintf(w, "%q", string(str))
+	io.WriteString(w, strconv.Quote(string(str)))
 }
 
 type rawVal string
 
 func (r rawVal) WriteTo(w io.Writer, indent string, opts *Options) {
-	fmt.Fprintf(w, "%s", string(r))
+	io.WriteString(w, string(r))
 }
 
 type keyval struct {
@@ -76,25 +76,30 @@ func (l keyvals) WriteTo(w io.Writer, indent string, opts *Options) {
 	padding := strings.Repeat(" ", keyWidth+1)
 
 	inner := indent + "  " + padding
-	fmt.Fprintf(w, "{")
+	io.WriteString(w, "{")
 	for i, kv := range l {
 		if opts.Compact {
-			fmt.Fprintf(w, "%s:", kv.key)
+			io.WriteString(w, kv.key)
+			io.WriteString(w, ":")
 		} else {
 			if i > 0 || opts.Diffable {
-				fmt.Fprintf(w, "\n%s ", indent)
+				io.WriteString(w, "\n ")
+				io.WriteString(w, indent)
 			}
-			fmt.Fprintf(w, "%s:%s", kv.key, padding[len(kv.key):])
+			io.WriteString(w, kv.key)
+			io.WriteString(w, ":")
+			io.WriteString(w, padding[len(kv.key):])
 		}
 		kv.val.WriteTo(w, inner, opts)
 		if i+1 < len(l) || opts.Diffable {
-			fmt.Fprintf(w, ",")
+			io.WriteString(w, ",")
 		}
 	}
 	if !opts.Compact && opts.Diffable && len(l) > 0 {
-		fmt.Fprintf(w, "\n%s", indent)
+		io.WriteString(w, "\n")
+		io.WriteString(w, indent)
 	}
-	fmt.Fprintf(w, "}")
+	io.WriteString(w, "}")
 }
 
 type list []node
@@ -103,24 +108,26 @@ func (l list) WriteTo(w io.Writer, indent string, opts *Options) {
 	if max := opts.ShortList; max > 0 {
 		short := compactString(l)
 		if len(short) <= max {
-			fmt.Fprintf(w, short)
+			io.WriteString(w, short)
 			return
 		}
 	}
 
 	inner := indent + " "
-	fmt.Fprintf(w, "[")
+	io.WriteString(w, "[")
 	for i, v := range l {
 		if !opts.Compact && (i > 0 || opts.Diffable) {
-			fmt.Fprintf(w, "\n%s", inner)
+			io.WriteString(w, "\n")
+			io.WriteString(w, inner)
 		}
 		v.WriteTo(w, inner, opts)
 		if i+1 < len(l) || opts.Diffable {
-			fmt.Fprintf(w, ",")
+			io.WriteString(w, ",")
 		}
 	}
 	if !opts.Compact && opts.Diffable && len(l) > 0 {
-		fmt.Fprintf(w, "\n%s", indent)
+		io.WriteString(w, "\n")
+		io.WriteString(w, indent)
 	}
-	fmt.Fprintf(w, "]")
+	io.WriteString(w, "]")
 }
