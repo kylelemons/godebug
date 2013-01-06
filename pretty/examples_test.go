@@ -90,3 +90,49 @@ func ExamplePrint() {
 	//  Androids: 1,
 	//  Stolen:   true}
 }
+
+func ExampleCompare() {
+	type ShipManifest struct {
+		Name     string
+		Crew     map[string]string
+		Androids int
+		Stolen   bool
+	}
+
+	reported := &ShipManifest{
+		Name: "Spaceship Heart of Gold",
+		Crew: map[string]string{
+			"Zaphod Beeblebrox": "Galactic President",
+			"Trillian":          "Human",
+			"Ford Prefect":      "A Hoopy Frood",
+			"Arthur Dent":       "Along for the Ride",
+		},
+		Androids: 1,
+		Stolen:   true,
+	}
+
+	expected := &ShipManifest{
+		Name: "Spaceship Heart of Gold",
+		Crew: map[string]string{
+			"Rowan Artosok": "Captain",
+		},
+		Androids: 1,
+		Stolen:   false,
+	}
+
+	fmt.Println(pretty.Compare(reported, expected))
+	// Output:
+	//  {
+	//   Name:     "Spaceship Heart of Gold",
+	//   Crew:     {
+	// -            Arthur Dent:       "Along for the Ride",
+	// -            Ford Prefect:      "A Hoopy Frood",
+	// -            Trillian:          "Human",
+	// -            Zaphod Beeblebrox: "Galactic President",
+	// +            Rowan Artosok: "Captain",
+	//             },
+	//   Androids: 1,
+	// - Stolen:   true,
+	// + Stolen:   false,
+	//  }
+}
