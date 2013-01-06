@@ -85,6 +85,7 @@ States of America.
 `)
 
 	got := strings.TrimSpace(`
+:wq
 We the People of the United States, in Order to form a more perfect Union,
 establish Justice, insure domestic Tranquility, provide for the common defence,
 and secure the Blessings of Liberty to ourselves
@@ -95,6 +96,7 @@ States of America.
 	fmt.Println(Diff(got, constitution))
 
 	// Output:
+	// -:wq
 	//  We the People of the United States, in Order to form a more perfect Union,
 	//  establish Justice, insure domestic Tranquility, provide for the common defence,
 	// -and secure the Blessings of Liberty to ourselves
