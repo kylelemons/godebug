@@ -8,7 +8,6 @@
 //
 // TODO:
 //   - Catch cycles
-//   - Compare function
 //   - Logging helpers
 //   - Change Options to Config
 package pretty
