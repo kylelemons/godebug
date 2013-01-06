@@ -6,26 +6,21 @@ import (
 	"strings"
 )
 
-// An Options represents optional configuration parameters for formatting.
+// A Config represents optional configuration parameters for formatting.
 //
 // Some options, notably ShortList, dramatically increase the overhead
 // of pretty-printing a value.
-type Options struct {
+type Config struct {
 	Compact  bool // One-line output. Overrides Diffable.
 	Diffable bool // Adds extra newlines for more easily diffable output.
 
 	ShortList int // Maximum character length for short lists if nonzero.
 }
 
-var DefaultOptions = &Options{}
-
-func (o *Options) dup() *Options {
-	o2 := *o
-	return &o2
-}
+var DefaultConfig = &Config{}
 
 type node interface {
-	WriteTo(w *bytes.Buffer, indent string, opts *Options)
+	WriteTo(w *bytes.Buffer, indent string, cfg *Config)
 }
 
 func compactString(n node) string {
@@ -37,19 +32,19 @@ func compactString(n node) string {
 	}
 
 	buf := new(bytes.Buffer)
-	n.WriteTo(buf, "", &Options{Compact: true})
+	n.WriteTo(buf, "", &Config{Compact: true})
 	return buf.String()
 }
 
 type stringVal string
 
-func (str stringVal) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
+func (str stringVal) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 	w.WriteString(strconv.Quote(string(str)))
 }
 
 type rawVal string
 
-func (r rawVal) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
+func (r rawVal) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 	w.WriteString(string(r))
 }
 
@@ -64,7 +59,7 @@ func (l keyvals) Len() int           { return len(l) }
 func (l keyvals) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 func (l keyvals) Less(i, j int) bool { return l[i].key < l[j].key }
 
-func (l keyvals) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
+func (l keyvals) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 	keyWidth := 0
 
 	for _, kv := range l {
@@ -77,11 +72,11 @@ func (l keyvals) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
 	inner := indent + "  " + padding
 	w.WriteByte('{')
 	for i, kv := range l {
-		if opts.Compact {
+		if cfg.Compact {
 			w.WriteString(kv.key)
 			w.WriteByte(':')
 		} else {
-			if i > 0 || opts.Diffable {
+			if i > 0 || cfg.Diffable {
 				w.WriteString("\n ")
 				w.WriteString(indent)
 			}
@@ -89,12 +84,12 @@ func (l keyvals) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
 			w.WriteByte(':')
 			w.WriteString(padding[len(kv.key):])
 		}
-		kv.val.WriteTo(w, inner, opts)
-		if i+1 < len(l) || opts.Diffable {
+		kv.val.WriteTo(w, inner, cfg)
+		if i+1 < len(l) || cfg.Diffable {
 			w.WriteByte(',')
 		}
 	}
-	if !opts.Compact && opts.Diffable && len(l) > 0 {
+	if !cfg.Compact && cfg.Diffable && len(l) > 0 {
 		w.WriteString("\n")
 		w.WriteString(indent)
 	}
@@ -103,8 +98,8 @@ func (l keyvals) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
 
 type list []node
 
-func (l list) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
-	if max := opts.ShortList; max > 0 {
+func (l list) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
+	if max := cfg.ShortList; max > 0 {
 		short := compactString(l)
 		if len(short) <= max {
 			w.WriteString(short)
@@ -115,16 +110,16 @@ func (l list) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
 	inner := indent + " "
 	w.WriteByte('[')
 	for i, v := range l {
-		if !opts.Compact && (i > 0 || opts.Diffable) {
+		if !cfg.Compact && (i > 0 || cfg.Diffable) {
 			w.WriteByte('\n')
 			w.WriteString(inner)
 		}
-		v.WriteTo(w, inner, opts)
-		if i+1 < len(l) || opts.Diffable {
+		v.WriteTo(w, inner, cfg)
+		if i+1 < len(l) || cfg.Diffable {
 			w.WriteByte(',')
 		}
 	}
-	if !opts.Compact && opts.Diffable && len(l) > 0 {
+	if !cfg.Compact && cfg.Diffable && len(l) > 0 {
 		w.WriteByte('\n')
 		w.WriteString(indent)
 	}

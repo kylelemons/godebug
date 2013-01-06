@@ -8,16 +8,16 @@ import (
 )
 
 // Reflect returns the string representation of the given value with the given
-// options.  If opts is nil, the DefaultOptions are used.
-func Reflect(val interface{}, opts *Options) string {
-	if opts == nil {
-		opts = DefaultOptions
+// options.  If cfg is nil, the DefaultConfig are used.
+func Reflect(val interface{}, cfg *Config) string {
+	if cfg == nil {
+		cfg = DefaultConfig
 	}
 
 	node := val2node(reflect.ValueOf(val))
 
 	buf := new(bytes.Buffer)
-	node.WriteTo(buf, "", opts)
+	node.WriteTo(buf, "", cfg)
 	return buf.String()
 }
 

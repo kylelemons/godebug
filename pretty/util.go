@@ -8,13 +8,13 @@ import (
 
 // Print writes the default representation of the given values to standard output.
 func Print(vals ...interface{}) {
-	DefaultOptions.Print(vals...)
+	DefaultConfig.Print(vals...)
 }
 
 // Print writes the configured presentation of the given values to standard output.
-func (o *Options) Print(vals ...interface{}) {
+func (cfg *Config) Print(vals ...interface{}) {
 	for _, val := range vals {
-		fmt.Println(Reflect(val, o))
+		fmt.Println(Reflect(val, cfg))
 	}
 }
 
@@ -23,7 +23,7 @@ func (o *Options) Print(vals ...interface{}) {
 // indicate if it should be added to, removed from, or is correct for the "got"
 // value with respect to the "want" value.
 func Compare(got, want interface{}) string {
-	diffOpt := &Options{Diffable: true}
+	diffOpt := &Config{Diffable: true}
 
 	return diff.Diff(Reflect(got, diffOpt), Reflect(want, diffOpt))
 }

@@ -9,5 +9,4 @@
 // TODO:
 //   - Catch cycles
 //   - Logging helpers
-//   - Change Options to Config
 package pretty

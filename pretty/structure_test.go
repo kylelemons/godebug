@@ -100,12 +100,12 @@ func TestWriteTo(t *testing.T) {
 
 	for _, test := range tests {
 		buf := new(bytes.Buffer)
-		test.node.WriteTo(buf, "", &Options{})
+		test.node.WriteTo(buf, "", &Config{})
 		if got, want := buf.String(), test.normal; got != want {
 			t.Errorf("%s: normal rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
 		buf.Reset()
-		test.node.WriteTo(buf, "", &Options{Diffable: true})
+		test.node.WriteTo(buf, "", &Config{Diffable: true})
 		if got, want := buf.String(), test.extended; got != want {
 			t.Errorf("%s: extended rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
@@ -172,7 +172,7 @@ func TestCompactString(t *testing.T) {
 }
 
 func TestShortList(t *testing.T) {
-	opts := &Options{
+	cfg := &Config{
 		ShortList: 16,
 	}
 
@@ -209,7 +209,7 @@ func TestShortList(t *testing.T) {
 
 	for _, test := range tests {
 		buf := new(bytes.Buffer)
-		test.node.WriteTo(buf, "", opts)
+		test.node.WriteTo(buf, "", cfg)
 		if got, want := buf.String(), test.want; got != want {
 			t.Errorf("%#v: got:\n%s\nwant:\n%s", test.node, got, want)
 		}
@@ -230,19 +230,19 @@ var benchNode = keyvals{
 	}},
 }
 
-func benchOpts(b *testing.B, opts *Options) {
+func benchOpts(b *testing.B, cfg *Config) {
 	buf := new(bytes.Buffer)
-	benchNode.WriteTo(buf, "", opts)
+	benchNode.WriteTo(buf, "", cfg)
 	b.SetBytes(int64(buf.Len()))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		buf.Reset()
-		benchNode.WriteTo(buf, "", opts)
+		benchNode.WriteTo(buf, "", cfg)
 	}
 }
 
-func BenchmarkWriteDefault(b *testing.B)   { benchOpts(b, DefaultOptions) }
-func BenchmarkWriteShortList(b *testing.B) { benchOpts(b, &Options{ShortList: 16}) }
-func BenchmarkWriteCompact(b *testing.B)   { benchOpts(b, &Options{Compact: true}) }
-func BenchmarkWriteDiffable(b *testing.B)  { benchOpts(b, &Options{Diffable: true}) }
+func BenchmarkWriteDefault(b *testing.B)   { benchOpts(b, DefaultConfig) }
+func BenchmarkWriteShortList(b *testing.B) { benchOpts(b, &Config{ShortList: 16}) }
+func BenchmarkWriteCompact(b *testing.B)   { benchOpts(b, &Config{Compact: true}) }
+func BenchmarkWriteDiffable(b *testing.B)  { benchOpts(b, &Config{Diffable: true}) }

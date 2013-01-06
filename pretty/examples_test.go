@@ -28,11 +28,11 @@ func ExampleReflect() {
 	}
 
 	// Print out a summary
-	players := pretty.Reflect(m.Players, &pretty.Options{Compact: true})
+	players := pretty.Reflect(m.Players, &pretty.Config{Compact: true})
 	fmt.Printf("Players: %s\n", players)
 
 	// Print diffable output
-	state := pretty.Reflect(m, &pretty.Options{Diffable: true})
+	state := pretty.Reflect(m, &pretty.Config{Diffable: true})
 	fmt.Printf("Map State:\n%s", state)
 
 	// Output:
