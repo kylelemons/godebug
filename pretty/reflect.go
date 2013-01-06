@@ -80,15 +80,3 @@ func val2node(val reflect.Value) node {
 
 	return rawVal(val.String())
 }
-
-// Print writes the default representation of the given values to standard output.
-func Print(vals ...interface{}) {
-	DefaultOptions.Print(vals...)
-}
-
-// Print writes the configured presentation of the given values to standard output.
-func (o *Options) Print(vals ...interface{}) {
-	for _, val := range vals {
-		fmt.Println(Reflect(val, o))
-	}
-}
