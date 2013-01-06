@@ -38,7 +38,7 @@ func Diff(A, B string) string {
 			fmt.Fprintf(buf, " %s\n", line)
 		}
 	}
-	return buf.String()
+	return strings.TrimRight(buf.String(), "\n")
 }
 
 // DiffChunks uses an O(D(N+M)) shortest-edit-script algorithm

@@ -44,8 +44,7 @@ func TestDiff(t *testing.T) {
             "Trillian",
 -           "Marvin",
            ],
- }
-`,
+ }`,
 		},
 	}
 
