@@ -2,7 +2,6 @@ package pretty
 
 import (
 	"bytes"
-	"io"
 	"strconv"
 	"strings"
 )
@@ -26,7 +25,7 @@ func (o *Options) dup() *Options {
 }
 
 type node interface {
-	WriteTo(w io.Writer, indent string, opts *Options)
+	WriteTo(w *bytes.Buffer, indent string, opts *Options)
 }
 
 func compactString(n node) string {
@@ -44,14 +43,14 @@ func compactString(n node) string {
 
 type stringVal string
 
-func (str stringVal) WriteTo(w io.Writer, indent string, opts *Options) {
-	io.WriteString(w, strconv.Quote(string(str)))
+func (str stringVal) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
+	w.WriteString(strconv.Quote(string(str)))
 }
 
 type rawVal string
 
-func (r rawVal) WriteTo(w io.Writer, indent string, opts *Options) {
-	io.WriteString(w, string(r))
+func (r rawVal) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
+	w.WriteString(string(r))
 }
 
 type keyval struct {
@@ -65,7 +64,7 @@ func (l keyvals) Len() int           { return len(l) }
 func (l keyvals) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 func (l keyvals) Less(i, j int) bool { return l[i].key < l[j].key }
 
-func (l keyvals) WriteTo(w io.Writer, indent string, opts *Options) {
+func (l keyvals) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
 	keyWidth := 0
 
 	for _, kv := range l {
@@ -76,58 +75,58 @@ func (l keyvals) WriteTo(w io.Writer, indent string, opts *Options) {
 	padding := strings.Repeat(" ", keyWidth+1)
 
 	inner := indent + "  " + padding
-	io.WriteString(w, "{")
+	w.WriteByte('{')
 	for i, kv := range l {
 		if opts.Compact {
-			io.WriteString(w, kv.key)
-			io.WriteString(w, ":")
+			w.WriteString(kv.key)
+			w.WriteByte(':')
 		} else {
 			if i > 0 || opts.Diffable {
-				io.WriteString(w, "\n ")
-				io.WriteString(w, indent)
+				w.WriteString("\n ")
+				w.WriteString(indent)
 			}
-			io.WriteString(w, kv.key)
-			io.WriteString(w, ":")
-			io.WriteString(w, padding[len(kv.key):])
+			w.WriteString(kv.key)
+			w.WriteByte(':')
+			w.WriteString(padding[len(kv.key):])
 		}
 		kv.val.WriteTo(w, inner, opts)
 		if i+1 < len(l) || opts.Diffable {
-			io.WriteString(w, ",")
+			w.WriteByte(',')
 		}
 	}
 	if !opts.Compact && opts.Diffable && len(l) > 0 {
-		io.WriteString(w, "\n")
-		io.WriteString(w, indent)
+		w.WriteString("\n")
+		w.WriteString(indent)
 	}
-	io.WriteString(w, "}")
+	w.WriteByte('}')
 }
 
 type list []node
 
-func (l list) WriteTo(w io.Writer, indent string, opts *Options) {
+func (l list) WriteTo(w *bytes.Buffer, indent string, opts *Options) {
 	if max := opts.ShortList; max > 0 {
 		short := compactString(l)
 		if len(short) <= max {
-			io.WriteString(w, short)
+			w.WriteString(short)
 			return
 		}
 	}
 
 	inner := indent + " "
-	io.WriteString(w, "[")
+	w.WriteByte('[')
 	for i, v := range l {
 		if !opts.Compact && (i > 0 || opts.Diffable) {
-			io.WriteString(w, "\n")
-			io.WriteString(w, inner)
+			w.WriteByte('\n')
+			w.WriteString(inner)
 		}
 		v.WriteTo(w, inner, opts)
 		if i+1 < len(l) || opts.Diffable {
-			io.WriteString(w, ",")
+			w.WriteByte(',')
 		}
 	}
 	if !opts.Compact && opts.Diffable && len(l) > 0 {
-		io.WriteString(w, "\n")
-		io.WriteString(w, indent)
+		w.WriteByte('\n')
+		w.WriteString(indent)
 	}
-	io.WriteString(w, "]")
+	w.WriteByte(']')
 }
