@@ -1,7 +1,9 @@
 package diff
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -71,4 +73,32 @@ func TestDiff(t *testing.T) {
 			}
 		}
 	}
+}
+
+func ExampleDiff() {
+	constitution := strings.TrimSpace(`
+We the People of the United States, in Order to form a more perfect Union,
+establish Justice, insure domestic Tranquility, provide for the common defence,
+promote the general Welfare, and secure the Blessings of Liberty to ourselves
+and our Posterity, do ordain and establish this Constitution for the United
+States of America.
+`)
+
+	got := strings.TrimSpace(`
+We the People of the United States, in Order to form a more perfect Union,
+establish Justice, insure domestic Tranquility, provide for the common defence,
+and secure the Blessings of Liberty to ourselves
+and our Posterity, do ordain and establish this Constitution for the United
+States of America.
+`)
+
+	fmt.Println(Diff(got, constitution))
+
+	// Output:
+	//  We the People of the United States, in Order to form a more perfect Union,
+	//  establish Justice, insure domestic Tranquility, provide for the common defence,
+	// -and secure the Blessings of Liberty to ourselves
+	// +promote the general Welfare, and secure the Blessings of Liberty to ourselves
+	//  and our Posterity, do ordain and establish this Constitution for the United
+	//  States of America.
 }
