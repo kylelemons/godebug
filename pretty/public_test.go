@@ -6,9 +6,9 @@ import (
 
 func TestDiff(t *testing.T) {
 	type example struct {
-		name    string
-		age     int
-		friends []string
+		Name    string
+		Age     int
+		Friends []string
 	}
 
 	tests := []struct {
@@ -19,27 +19,27 @@ func TestDiff(t *testing.T) {
 		{
 			desc: "basic struct",
 			got: example{
-				name: "Zaphd",
-				age:  42,
-				friends: []string{
+				Name: "Zaphd",
+				Age:  42,
+				Friends: []string{
 					"Ford Prefect",
 					"Trillian",
 					"Marvin",
 				},
 			},
 			want: example{
-				name: "Zaphod",
-				age:  42,
-				friends: []string{
+				Name: "Zaphod",
+				Age:  42,
+				Friends: []string{
 					"Ford Prefect",
 					"Trillian",
 				},
 			},
 			diff: ` {
-- name:    "Zaphd",
-+ name:    "Zaphod",
-  age:     42,
-  friends: [
+- Name:    "Zaphd",
++ Name:    "Zaphod",
+  Age:     42,
+  Friends: [
             "Ford Prefect",
             "Trillian",
 -           "Marvin",

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestReflect(t *testing.T) {
+func TestVal2nodeDefault(t *testing.T) {
 	tests := []struct {
 		desc string
 		raw  interface{}
@@ -52,10 +52,10 @@ func TestReflect(t *testing.T) {
 		},
 		{
 			"struct",
-			struct{ zaphod, ford string }{"beeblebrox", "prefect"},
+			struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
 			keyvals{
-				{"zaphod", stringVal("beeblebrox")},
-				{"ford", stringVal("prefect")},
+				{"Zaphod", stringVal("beeblebrox")},
+				{"Ford", stringVal("prefect")},
 			},
 		},
 		{
@@ -66,7 +66,44 @@ func TestReflect(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
+		if got, want := DefaultConfig.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
+			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
+		}
+	}
+}
+
+func TestVal2node(t *testing.T) {
+	tests := []struct {
+		desc string
+		raw  interface{}
+		cfg  *Config
+		want node
+	}{
+		{
+			"struct default",
+			struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "BAD"},
+			DefaultConfig,
+			keyvals{
+				{"Zaphod", stringVal("beeblebrox")},
+				{"Ford", stringVal("prefect")},
+			},
+		},
+		{
+			"struct w/ unexported",
+			struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "GOOD"},
+			&Config{
+				IncludeUnexported: true,
+			},
+			keyvals{
+				{"Zaphod", stringVal("beeblebrox")},
+				{"Ford", stringVal("prefect")},
+				{"foo", stringVal("GOOD")},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		if got, want := test.cfg.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
 		}
 	}

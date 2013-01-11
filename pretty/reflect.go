@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-func val2node(val reflect.Value) node {
+func (c *Config) val2node(val reflect.Value) node {
 	// TODO(kevlar): pointer tracking?
 
 	switch kind := val.Kind(); kind {
@@ -14,14 +14,14 @@ func val2node(val reflect.Value) node {
 		if val.IsNil() {
 			return rawVal("nil")
 		}
-		return val2node(val.Elem())
+		return c.val2node(val.Elem())
 	case reflect.String:
 		return stringVal(val.String())
 	case reflect.Slice, reflect.Array:
 		n := list{}
 		length := val.Len()
 		for i := 0; i < length; i++ {
-			n = append(n, val2node(val.Index(i)))
+			n = append(n, c.val2node(val.Index(i)))
 		}
 		return n
 	case reflect.Map:
@@ -29,7 +29,7 @@ func val2node(val reflect.Value) node {
 		keys := val.MapKeys()
 		for _, key := range keys {
 			// TODO(kevlar): Support arbitrary type keys?
-			n = append(n, keyval{compactString(val2node(key)), val2node(val.MapIndex(key))})
+			n = append(n, keyval{compactString(c.val2node(key)), c.val2node(val.MapIndex(key))})
 		}
 		sort.Sort(n)
 		return n
@@ -38,7 +38,11 @@ func val2node(val reflect.Value) node {
 		typ := val.Type()
 		fields := typ.NumField()
 		for i := 0; i < fields; i++ {
-			n = append(n, keyval{typ.Field(i).Name, val2node(val.Field(i))})
+			sf := typ.Field(i)
+			if !c.IncludeUnexported && sf.PkgPath != "" {
+				continue
+			}
+			n = append(n, keyval{sf.Name, c.val2node(val.Field(i))})
 		}
 		return n
 	case reflect.Bool:

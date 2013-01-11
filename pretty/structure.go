@@ -14,6 +14,8 @@ type Config struct {
 	Compact  bool // One-line output. Overrides Diffable.
 	Diffable bool // Adds extra newlines for more easily diffable output.
 
+	IncludeUnexported bool // Include unexported fields in output
+
 	ShortList int // Maximum character length for short lists if nonzero.
 }
 
