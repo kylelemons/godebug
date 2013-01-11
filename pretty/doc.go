@@ -5,8 +5,7 @@
 // modes (normal, compact, and extended) for advanced use.
 //
 // See the Reflect and Print examples for what the output looks like.
-//
+package pretty
+
 // TODO:
 //   - Catch cycles
-//   - Logging helpers
-package pretty
