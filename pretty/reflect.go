@@ -1,25 +1,10 @@
 package pretty
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"sort"
 )
-
-// Reflect returns the string representation of the given value with the given
-// options.  If cfg is nil, the DefaultConfig are used.
-func Reflect(val interface{}, cfg *Config) string {
-	if cfg == nil {
-		cfg = DefaultConfig
-	}
-
-	node := val2node(reflect.ValueOf(val))
-
-	buf := new(bytes.Buffer)
-	node.WriteTo(buf, "", cfg)
-	return buf.String()
-}
 
 func val2node(val reflect.Value) node {
 	// TODO(kevlar): pointer tracking?

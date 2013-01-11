@@ -5,7 +5,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 )
 
-func ExampleReflect() {
+func ExampleConfig_Sprint() {
 	type Pair [2]int
 	type Map struct {
 		Name      string
@@ -27,13 +27,19 @@ func ExampleReflect() {
 		},
 	}
 
+	// Specific output formats
+	compact := &pretty.Config{
+		Compact: true,
+	}
+	diffable := &pretty.Config{
+		Diffable: true,
+	}
+
 	// Print out a summary
-	players := pretty.Reflect(m.Players, &pretty.Config{Compact: true})
-	fmt.Printf("Players: %s\n", players)
+	fmt.Printf("Players: %s\n", compact.Sprint(m.Players))
 
 	// Print diffable output
-	state := pretty.Reflect(m, &pretty.Config{Diffable: true})
-	fmt.Printf("Map State:\n%s", state)
+	fmt.Printf("Map State:\n%s", diffable.Sprint(m))
 
 	// Output:
 	// Players: {player1:[1,3],player2:[0,-1]}
@@ -59,7 +65,7 @@ func ExampleReflect() {
 	// }
 }
 
-func ExamplePrint() {
+func ExampleConfig_Print() {
 	type ShipManifest struct {
 		Name     string
 		Crew     map[string]string
