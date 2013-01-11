@@ -65,7 +65,7 @@ func ExampleConfig_Sprint() {
 	// }
 }
 
-func ExampleConfig_Print() {
+func ExamplePrint() {
 	type ShipManifest struct {
 		Name     string
 		Crew     map[string]string
