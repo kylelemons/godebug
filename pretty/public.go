@@ -53,14 +53,15 @@ func (cfg *Config) Fprint(w io.Writer, vals ...interface{}) (n int64, err error)
 }
 
 // Compare returns a string containing a line-by-line unified diff of the
-// values in got and want.  Compare ignores unexported fields.
+// values in got and want.  Compare includes unexported fields.
 //
 // Each line in the output is prefixed with '+', '-', or ' ' to indicate if it
 // should be added to, removed from, or is correct for the "got" value with
 // respect to the "want" value.
 func Compare(got, want interface{}) string {
 	diffOpt := &Config{
-		Diffable: true,
+		Diffable:          true,
+		IncludeUnexported: true,
 	}
 
 	return diff.Diff(diffOpt.Sprint(got), diffOpt.Sprint(want))
