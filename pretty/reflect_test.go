@@ -2,6 +2,7 @@ package pretty
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -107,4 +108,21 @@ func TestVal2node(t *testing.T) {
 			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
 		}
 	}
+}
+
+func TestRecursion(t *testing.T) {
+
+	type Recursive struct {
+		R *Recursive
+	}
+
+	r := &Recursive{}
+	r.R = r
+	x := Sprint(r)
+
+	if !strings.Contains(x, "recursion on") {
+		t.Errorf("Expected formatted string to contain 'recursion on', got: %q",
+			x)
+	}
+
 }
