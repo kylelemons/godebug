@@ -122,7 +122,7 @@ func TestVal2nodeDefault(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := DefaultConfig.val2node(reflect.ValueOf(test.raw), emptyset), test.want; !reflect.DeepEqual(got, want) {
+		if got, want := DefaultConfig.val2node(reflect.ValueOf(test.raw), map[uintptr]bool{}), test.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
 		}
 	}
@@ -200,7 +200,7 @@ func TestVal2node(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := test.cfg.val2node(reflect.ValueOf(test.raw), emptyset), test.want; !reflect.DeepEqual(got, want) {
+		if got, want := test.cfg.val2node(reflect.ValueOf(test.raw), map[uintptr]bool{}), test.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
 		}
 	}

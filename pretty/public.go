@@ -25,8 +25,6 @@ import (
 	"github.com/kylelemons/godebug/diff"
 )
 
-var emptyset = map[uintptr]bool{}
-
 // A Config represents optional configuration parameters for formatting.
 //
 // Some options, notably ShortList, dramatically increase the overhead
@@ -97,7 +95,7 @@ func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
-		cfg.val2node(reflect.ValueOf(val), emptyset).WriteTo(buf, "", cfg)
+		cfg.val2node(reflect.ValueOf(val), map[uintptr]bool{}).WriteTo(buf, "", cfg)
 	}
 }
 
