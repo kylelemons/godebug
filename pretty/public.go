@@ -9,14 +9,12 @@ import (
 	"github.com/kylelemons/godebug/diff"
 )
 
-var emptyset = map[uintptr]bool{}
-
 func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 	for i, val := range vals {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
-		cfg.val2node(reflect.ValueOf(val), emptyset).WriteTo(buf, "", cfg)
+		cfg.val2node(reflect.ValueOf(val), map[uintptr]bool{}).WriteTo(buf, "", cfg)
 	}
 }
 
