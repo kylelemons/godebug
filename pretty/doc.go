@@ -6,6 +6,3 @@
 //
 // See the Reflect and Print examples for what the output looks like.
 package pretty
-
-// TODO:
-//   - Catch cycles
