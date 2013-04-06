@@ -6,21 +6,6 @@ import (
 	"strings"
 )
 
-// A Config represents optional configuration parameters for formatting.
-//
-// Some options, notably ShortList, dramatically increase the overhead
-// of pretty-printing a value.
-type Config struct {
-	Compact  bool // One-line output. Overrides Diffable.
-	Diffable bool // Adds extra newlines for more easily diffable output.
-
-	IncludeUnexported bool // Include unexported fields in output
-
-	ShortList int // Maximum character length for short lists if nonzero.
-}
-
-var DefaultConfig = &Config{}
-
 type node interface {
 	WriteTo(w *bytes.Buffer, indent string, cfg *Config)
 }

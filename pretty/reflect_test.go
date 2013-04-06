@@ -3,6 +3,7 @@ package pretty
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestVal2nodeDefault(t *testing.T) {
@@ -89,7 +90,7 @@ func TestVal2node(t *testing.T) {
 			},
 		},
 		{
-			"struct w/ unexported",
+			"struct w/ IncludeUnexported",
 			struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "GOOD"},
 			&Config{
 				IncludeUnexported: true,
@@ -98,6 +99,24 @@ func TestVal2node(t *testing.T) {
 				{"Zaphod", stringVal("beeblebrox")},
 				{"Ford", stringVal("prefect")},
 				{"foo", stringVal("GOOD")},
+			},
+		},
+		{
+			"time default",
+			struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
+			DefaultConfig,
+			keyvals{
+				{"Date", keyvals{}}, // empty struct, it has unexported fields
+			},
+		},
+		{
+			"time w/ PrintStringers",
+			struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
+			&Config{
+				PrintStringers: true,
+			},
+			keyvals{
+				{"Date", stringVal("2009-02-13 23:31:30 +0000 UTC")},
 			},
 		},
 	}

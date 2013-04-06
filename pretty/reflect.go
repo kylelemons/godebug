@@ -9,6 +9,13 @@ import (
 func (c *Config) val2node(val reflect.Value) node {
 	// TODO(kevlar): pointer tracking?
 
+	if c.PrintStringers && val.CanInterface() {
+		stringer, ok := val.Interface().(fmt.Stringer)
+		if ok {
+			return stringVal(stringer.String())
+		}
+	}
+
 	switch kind := val.Kind(); kind {
 	case reflect.Ptr, reflect.Interface:
 		if val.IsNil() {

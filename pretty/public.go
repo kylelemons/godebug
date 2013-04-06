@@ -9,6 +9,24 @@ import (
 	"github.com/kylelemons/godebug/diff"
 )
 
+// A Config represents optional configuration parameters for formatting.
+//
+// Some options, notably ShortList, dramatically increase the overhead
+// of pretty-printing a value.
+type Config struct {
+	// Verbosity options
+	Compact  bool // One-line output. Overrides Diffable.
+	Diffable bool // Adds extra newlines for more easily diffable output.
+
+	// Field and value options
+	IncludeUnexported bool // Include unexported fields in output
+	PrintStringers    bool // Call String on a fmt.Stringer
+
+	ShortList int // Maximum character length for short lists if nonzero.
+}
+
+var DefaultConfig = &Config{}
+
 func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 	for i, val := range vals {
 		if i > 0 {
