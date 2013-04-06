@@ -22,6 +22,7 @@ type Config struct {
 	IncludeUnexported bool // Include unexported fields in output
 	PrintStringers    bool // Call String on a fmt.Stringer
 
+	// Output transforms
 	ShortList int // Maximum character length for short lists if nonzero.
 }
 
