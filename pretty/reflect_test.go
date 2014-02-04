@@ -16,6 +16,7 @@ package pretty
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -81,7 +82,7 @@ func TestVal2nodeDefault(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := DefaultConfig.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
+		if got, want := DefaultConfig.val2node(reflect.ValueOf(test.raw), map[uintptr]bool{}), test.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
 		}
 	}
@@ -136,8 +137,25 @@ func TestVal2node(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := test.cfg.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
+		if got, want := test.cfg.val2node(reflect.ValueOf(test.raw), map[uintptr]bool{}), test.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
 		}
 	}
+}
+
+func TestRecursion(t *testing.T) {
+
+	type Recursive struct {
+		R *Recursive
+	}
+
+	r := &Recursive{}
+	r.R = r
+	x := Sprint(r)
+
+	if !strings.Contains(x, "recursion on") {
+		t.Errorf("Expected formatted string to contain 'recursion on', got: %q",
+			x)
+	}
+
 }

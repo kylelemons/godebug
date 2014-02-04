@@ -47,7 +47,7 @@ func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
-		cfg.val2node(reflect.ValueOf(val)).WriteTo(buf, "", cfg)
+		cfg.val2node(reflect.ValueOf(val), map[uintptr]bool{}).WriteTo(buf, "", cfg)
 	}
 }
 
