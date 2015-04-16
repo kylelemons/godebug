@@ -35,6 +35,7 @@ type Config struct {
 	// Field and value options
 	IncludeUnexported bool // Include unexported fields in output
 	PrintStringers    bool // Call String on a fmt.Stringer
+	SkipZeroFields    bool // Skip struct fields that have a zero value.
 
 	// Output transforms
 	ShortList int // Maximum character length for short lists if nonzero.
@@ -96,6 +97,16 @@ func Compare(got, want interface{}) string {
 		Diffable:          true,
 		IncludeUnexported: true,
 	}
+	return diff.Diff(diffOpt.Sprint(got), diffOpt.Sprint(want))
+}
 
+// CompareWithoutZeroFields returns a diff like Compare but omits struct fields
+// that have a zero value.
+func CompareWithoutZeroFields(got, want interface{}) string {
+	diffOpt := &Config{
+		Diffable:          true,
+		IncludeUnexported: true,
+		SkipZeroFields:    true,
+	}
 	return diff.Diff(diffOpt.Sprint(got), diffOpt.Sprint(want))
 }
