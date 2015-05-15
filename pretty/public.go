@@ -41,7 +41,14 @@ type Config struct {
 	ShortList int // Maximum character length for short lists if nonzero.
 }
 
+// DefaultConfig is the default configuration used for all exported non-method functions except Compare.
 var DefaultConfig = &Config{}
+
+// ConmpareConfig is the default configuration used for Compare.
+var CompareConfig = &Config {
+	Diffable: true,
+	IncludeUnexported: true,
+}
 
 func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 	for i, val := range vals {
@@ -87,26 +94,18 @@ func (cfg *Config) Fprint(w io.Writer, vals ...interface{}) (n int64, err error)
 }
 
 // Compare returns a string containing a line-by-line unified diff of the
-// values in got and want.  Compare includes unexported fields.
+// values in got and want, using the default config.
 //
 // Each line in the output is prefixed with '+', '-', or ' ' to indicate if it
 // should be added to, removed from, or is correct for the "got" value with
 // respect to the "want" value.
 func Compare(got, want interface{}) string {
-	diffOpt := &Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-	}
-	return diff.Diff(diffOpt.Sprint(got), diffOpt.Sprint(want))
+	return CompareConfig.Compare(got, want)
 }
 
-// CompareWithoutZeroFields returns a diff like Compare but omits struct fields
-// that have a zero value.
-func CompareWithoutZeroFields(got, want interface{}) string {
-	diffOpt := &Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		SkipZeroFields:    true,
-	}
-	return diff.Diff(diffOpt.Sprint(got), diffOpt.Sprint(want))
+// Compare returns a string containing a line-by-line unified diff of the
+// values in got and want according to the cfg.
+func (cfg *Config) Compare(got, want interface{}) string {
+	cfg.Diffable = true
+	return diff.Diff(cfg.Sprint(got), cfg.Sprint(want))
 }

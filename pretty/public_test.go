@@ -71,7 +71,7 @@ func TestDiff(t *testing.T) {
 	}
 }
 
-func TestDiffWithoutZeroes(t *testing.T) {
+func TestSkipZeroFields(t *testing.T) {
 	type example struct {
 		Name    string
 		Species string
@@ -115,8 +115,11 @@ func TestDiffWithoutZeroes(t *testing.T) {
 		},
 	}
 
+	cfg := *CompareConfig
+	cfg.SkipZeroFields = true
+
 	for _, test := range tests {
-		if got, want := CompareWithoutZeroFields(test.got, test.want), test.diff; got != want {
+		if got, want := cfg.Compare(test.got, test.want), test.diff; got != want {
 			t.Errorf("%s:", test.desc)
 			t.Errorf("  got:  %q", got)
 			t.Errorf("  want: %q", want)
