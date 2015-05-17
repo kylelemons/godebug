@@ -109,6 +109,7 @@ func Compare(got, want interface{}) string {
 // Compare returns a string containing a line-by-line unified diff of the
 // values in got and want according to the cfg.
 func (cfg *Config) Compare(got, want interface{}) string {
-	cfg.Diffable = true
+	diffCfg := *cfg
+	diffCfg.Diffable = true
 	return diff.Diff(cfg.Sprint(got), cfg.Sprint(want))
 }
