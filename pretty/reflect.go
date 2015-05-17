@@ -20,6 +20,14 @@ import (
 	"sort"
 )
 
+func isZeroVal(val reflect.Value) bool {
+	if !val.CanInterface() {
+		return false
+	}
+	z := reflect.Zero(val.Type()).Interface()
+	return reflect.DeepEqual(val.Interface(), z)
+}
+
 func (c *Config) val2node(val reflect.Value) node {
 	// TODO(kevlar): pointer tracking?
 
@@ -63,7 +71,11 @@ func (c *Config) val2node(val reflect.Value) node {
 			if !c.IncludeUnexported && sf.PkgPath != "" {
 				continue
 			}
-			n = append(n, keyval{sf.Name, c.val2node(val.Field(i))})
+			field := val.Field(i)
+			if c.SkipZeroFields && isZeroVal(field) {
+				continue
+			}
+			n = append(n, keyval{sf.Name, c.val2node(field)})
 		}
 		return n
 	case reflect.Bool:

@@ -70,3 +70,59 @@ func TestDiff(t *testing.T) {
 		}
 	}
 }
+
+func TestSkipZeroFields(t *testing.T) {
+	type example struct {
+		Name    string
+		Species string
+		Age     int
+		Friends []string
+	}
+
+	tests := []struct {
+		desc      string
+		got, want interface{}
+		diff      string
+	}{
+		{
+			desc: "basic struct",
+			got: example{
+				Name:    "Zaphd",
+				Species: "Betelgeusian",
+				Age:     42,
+			},
+			want: example{
+				Name:    "Zaphod",
+				Species: "Betelgeusian",
+				Age:     42,
+				Friends: []string{
+					"Ford Prefect",
+					"Trillian",
+					"",
+				},
+			},
+			diff: ` {
+- Name:    "Zaphd",
++ Name:    "Zaphod",
+  Species: "Betelgeusian",
+  Age:     42,
++ Friends: [
++           "Ford Prefect",
++           "Trillian",
++           "",
++          ],
+ }`,
+		},
+	}
+
+	cfg := *CompareConfig
+	cfg.SkipZeroFields = true
+
+	for _, test := range tests {
+		if got, want := cfg.Compare(test.got, test.want), test.diff; got != want {
+			t.Errorf("%s:", test.desc)
+			t.Errorf("  got:  %q", got)
+			t.Errorf("  want: %q", want)
+		}
+	}
+}
