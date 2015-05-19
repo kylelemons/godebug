@@ -43,7 +43,7 @@ type Config struct {
 
 // Default Config objects
 var (
-	// ConmpareConfig is the default configuration used for Compare.
+	// CompareConfig is the default configuration used for Compare.
 	CompareConfig = &Config{
 		Diffable:          true,
 		IncludeUnexported: true,
