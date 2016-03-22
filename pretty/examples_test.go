@@ -59,23 +59,23 @@ func ExampleConfig_Sprint() {
 	// Players: {player1:[1,3],player2:[0,-1]}
 	// Map State:
 	// {
-	//  Name:      "Rock Creek",
-	//  Players:   {
-	//              player1: [
-	//                        1,
-	//                        3,
-	//                       ],
-	//              player2: [
-	//                        0,
-	//                        -1,
-	//                       ],
-	//             },
+	//  Name: "Rock Creek",
+	//  Players: {
+	//   player1: [
+	//    1,
+	//    3,
+	//   ],
+	//   player2: [
+	//    0,
+	//    -1,
+	//   ],
+	//  },
 	//  Obstacles: {
-	//              [0,0]: "rock",
-	//              [0,1]: "stream",
-	//              [1,1]: "stream",
-	//              [2,1]: "pond",
-	//             },
+	//   [0,0]: "rock",
+	//   [0,1]: "stream",
+	//   [1,1]: "stream",
+	//   [2,1]: "pond",
+	//  },
 	// }
 }
 
@@ -134,6 +134,7 @@ func ExampleCompare() {
 	expected := &ShipManifest{
 		Name: "Spaceship Heart of Gold",
 		Crew: map[string]string{
+			"Trillian":      "Human",
 			"Rowan Artosok": "Captain",
 		},
 		Androids: 1,
@@ -143,16 +144,16 @@ func ExampleCompare() {
 	fmt.Println(pretty.Compare(reported, expected))
 	// Output:
 	//  {
-	//   Name:     "Spaceship Heart of Gold",
-	//   Crew:     {
-	// -            Arthur Dent:       "Along for the Ride",
-	// -            Ford Prefect:      "A Hoopy Frood",
-	// -            Trillian:          "Human",
-	// -            Zaphod Beeblebrox: "Galactic President",
-	// +            Rowan Artosok: "Captain",
-	//             },
+	//   Name: "Spaceship Heart of Gold",
+	//   Crew: {
+	// -  Arthur Dent: "Along for the Ride",
+	// -  Ford Prefect: "A Hoopy Frood",
+	// +  Rowan Artosok: "Captain",
+	//    Trillian: "Human",
+	// -  Zaphod Beeblebrox: "Galactic President",
+	//   },
 	//   Androids: 1,
-	// - Stolen:   true,
-	// + Stolen:   false,
+	// - Stolen: true,
+	// + Stolen: false,
 	//  }
 }

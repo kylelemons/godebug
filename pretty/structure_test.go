@@ -48,7 +48,7 @@ func TestWriteTo(t *testing.T) {
  age:  42}`,
 			extended: `{
  name: "zaphod",
- age:  42,
+ age: 42,
 }`,
 		},
 		{
@@ -99,15 +99,16 @@ func TestWriteTo(t *testing.T) {
  ],
  {
   trillian: {
-             race: "human",
-             age:  36,
-            },
-  zaphod:   {
-             occupation: "president of the galaxy",
-             features:   "two heads",
-            },
+   race: "human",
+   age: 36,
+  },
+  zaphod: {
+   occupation: "president of the galaxy",
+   features: "two heads",
+  },
  },
- {},
+ {
+ },
 ]`,
 		},
 	}
