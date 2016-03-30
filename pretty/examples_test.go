@@ -16,6 +16,7 @@ package pretty_test
 
 import (
 	"fmt"
+
 	"github.com/kylelemons/godebug/pretty"
 )
 
