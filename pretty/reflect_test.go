@@ -15,6 +15,7 @@
 package pretty
 
 import (
+	"net"
 	"reflect"
 	"testing"
 	"time"
@@ -78,6 +79,11 @@ func TestVal2nodeDefault(t *testing.T) {
 			3,
 			rawVal("3"),
 		},
+		{
+			"TextMarshaler",
+			net.ParseIP("dead:beef::1"),
+			stringVal("dead:beef::1"),
+		},
 	}
 
 	for _, test := range tests {
@@ -120,7 +126,17 @@ func TestVal2node(t *testing.T) {
 			struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
 			DefaultConfig,
 			keyvals{
-				{"Date", keyvals{}}, // empty struct, it has unexported fields
+				{"Date", stringVal("2009-02-13T23:31:30Z")},
+			},
+		},
+		{
+			"time w/o TextMarshalers",
+			struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
+			&Config{
+				NoTextMarshalers: true,
+			},
+			keyvals{
+				{"Date", keyvals{}},
 			},
 		},
 		{

@@ -35,6 +35,7 @@ type Config struct {
 	// Field and value options
 	IncludeUnexported bool // Include unexported fields in output
 	PrintStringers    bool // Call String on a fmt.Stringer
+	NoTextMarshalers  bool // Don't automatically call MarshalText
 	SkipZeroFields    bool // Skip struct fields that have a zero value.
 
 	// Output transforms
