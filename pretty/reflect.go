@@ -32,6 +32,10 @@ func isZeroVal(val reflect.Value) bool {
 func (c *Config) val2node(val reflect.Value) node {
 	// TODO(kevlar): pointer tracking?
 
+	if !val.IsValid() {
+		return rawVal("nil")
+	}
+
 	if val.CanInterface() {
 		v := val.Interface()
 		if s, ok := v.(fmt.Stringer); ok && c.PrintStringers {
