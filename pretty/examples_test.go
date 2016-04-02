@@ -112,7 +112,128 @@ func ExamplePrint() {
 	//  Stolen:   true}
 }
 
-func ExampleCompare() {
+var t = struct {
+	Errorf func(string, ...interface{})
+}{
+	Errorf: func(format string, args ...interface{}) {
+		fmt.Println(fmt.Sprintf(format, args...) + "\n")
+	},
+}
+
+func ExampleCompare_testing() {
+	// Code under test:
+
+	type ShipManifest struct {
+		Name     string
+		Crew     map[string]string
+		Androids int
+		Stolen   bool
+	}
+
+	// AddCrew tries to add the given crewmember to the manifest.
+	AddCrew := func(m *ShipManifest, name, title string) {
+		if m.Crew == nil {
+			m.Crew = make(map[string]string)
+		}
+		m.Crew[title] = name
+	}
+
+	// Test function:
+	tests := []struct {
+		desc        string
+		before      *ShipManifest
+		name, title string
+		after       *ShipManifest
+	}{
+		{
+			desc:   "add first",
+			before: &ShipManifest{},
+			name:   "Zaphod Beeblebrox",
+			title:  "Galactic President",
+			after: &ShipManifest{
+				Crew: map[string]string{
+					"Zaphod Beeblebrox": "Galactic President",
+				},
+			},
+		},
+		{
+			desc: "add another",
+			before: &ShipManifest{
+				Crew: map[string]string{
+					"Zaphod Beeblebrox": "Galactic President",
+				},
+			},
+			name:  "Trillian",
+			title: "Human",
+			after: &ShipManifest{
+				Crew: map[string]string{
+					"Zaphod Beeblebrox": "Galactic President",
+					"Trillian":          "Human",
+				},
+			},
+		},
+		{
+			desc: "overwrite",
+			before: &ShipManifest{
+				Crew: map[string]string{
+					"Zaphod Beeblebrox": "Galactic President",
+				},
+			},
+			name:  "Zaphod Beeblebrox",
+			title: "Just this guy, you know?",
+			after: &ShipManifest{
+				Crew: map[string]string{
+					"Zaphod Beeblebrox": "Just this guy, you know?",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		AddCrew(test.before, test.name, test.title)
+		if diff := pretty.Compare(test.before, test.after); diff != "" {
+			t.Errorf("%s: post-AddCrew diff: (-got +want)\n%s", test.desc, diff)
+		}
+	}
+
+	// Output:
+	// add first: post-AddCrew diff: (-got +want)
+	//  {
+	//   Name: "",
+	//   Crew: {
+	// -  Galactic President: "Zaphod Beeblebrox",
+	// +  Zaphod Beeblebrox: "Galactic President",
+	//   },
+	//   Androids: 0,
+	//   Stolen: false,
+	//  }
+	//
+	// add another: post-AddCrew diff: (-got +want)
+	//  {
+	//   Name: "",
+	//   Crew: {
+	// -  Human: "Trillian",
+	// +  Trillian: "Human",
+	//    Zaphod Beeblebrox: "Galactic President",
+	//   },
+	//   Androids: 0,
+	//   Stolen: false,
+	//  }
+	//
+	// overwrite: post-AddCrew diff: (-got +want)
+	//  {
+	//   Name: "",
+	//   Crew: {
+	// -  Just this guy, you know?: "Zaphod Beeblebrox",
+	// -  Zaphod Beeblebrox: "Galactic President",
+	// +  Zaphod Beeblebrox: "Just this guy, you know?",
+	//   },
+	//   Androids: 0,
+	//   Stolen: false,
+	//  }
+}
+
+func ExampleCompare_debugging() {
 	type ShipManifest struct {
 		Name     string
 		Crew     map[string]string
