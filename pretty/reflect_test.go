@@ -28,61 +28,76 @@ func TestVal2nodeDefault(t *testing.T) {
 		want node
 	}{
 		{
-			"nil",
-			(*int)(nil),
-			rawVal("nil"),
+			desc: "nil",
+			raw:  nil,
+			want: rawVal("nil"),
 		},
 		{
-			"string",
-			"zaphod",
-			stringVal("zaphod"),
+			desc: "nil ptr",
+			raw:  (*int)(nil),
+			want: rawVal("nil"),
 		},
 		{
-			"slice",
-			[]string{"a", "b"},
-			list{stringVal("a"), stringVal("b")},
+			desc: "nil slice",
+			raw:  []string(nil),
+			want: list{},
 		},
 		{
-			"map",
-			map[string]string{
+			desc: "nil map",
+			raw:  map[string]string(nil),
+			want: keyvals{},
+		},
+		{
+			desc: "string",
+			raw:  "zaphod",
+			want: stringVal("zaphod"),
+		},
+		{
+			desc: "slice",
+			raw:  []string{"a", "b"},
+			want: list{stringVal("a"), stringVal("b")},
+		},
+		{
+			desc: "map",
+			raw: map[string]string{
 				"zaphod": "beeblebrox",
 				"ford":   "prefect",
 			},
-			keyvals{
+			want: keyvals{
 				{"ford", stringVal("prefect")},
 				{"zaphod", stringVal("beeblebrox")},
 			},
 		},
 		{
-			"map of [2]int",
-			map[[2]int]string{
+			desc: "map of [2]int",
+			raw: map[[2]int]string{
 				[2]int{-1, 2}: "school",
 				[2]int{0, 0}:  "origin",
 				[2]int{1, 3}:  "home",
 			},
-			keyvals{
+			want: keyvals{
 				{"[-1,2]", stringVal("school")},
 				{"[0,0]", stringVal("origin")},
 				{"[1,3]", stringVal("home")},
 			},
 		},
 		{
-			"struct",
-			struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
-			keyvals{
+			desc: "struct",
+			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
+			want: keyvals{
 				{"Zaphod", stringVal("beeblebrox")},
 				{"Ford", stringVal("prefect")},
 			},
 		},
 		{
-			"int",
-			3,
-			rawVal("3"),
+			desc: "int",
+			raw:  3,
+			want: rawVal("3"),
 		},
 		{
-			"TextMarshaler",
-			net.ParseIP("dead:beef::1"),
-			stringVal("dead:beef::1"),
+			desc: "TextMarshaler",
+			raw:  net.ParseIP("dead:beef::1"),
+			want: stringVal("dead:beef::1"),
 		},
 	}
 
@@ -101,51 +116,51 @@ func TestVal2node(t *testing.T) {
 		want node
 	}{
 		{
-			"struct default",
-			struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "BAD"},
-			DefaultConfig,
-			keyvals{
+			desc: "struct default",
+			raw:  struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "BAD"},
+			cfg:  DefaultConfig,
+			want: keyvals{
 				{"Zaphod", stringVal("beeblebrox")},
 				{"Ford", stringVal("prefect")},
 			},
 		},
 		{
-			"struct w/ IncludeUnexported",
-			struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "GOOD"},
-			&Config{
+			desc: "struct w/ IncludeUnexported",
+			raw:  struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "GOOD"},
+			cfg: &Config{
 				IncludeUnexported: true,
 			},
-			keyvals{
+			want: keyvals{
 				{"Zaphod", stringVal("beeblebrox")},
 				{"Ford", stringVal("prefect")},
 				{"foo", stringVal("GOOD")},
 			},
 		},
 		{
-			"time default",
-			struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
-			DefaultConfig,
-			keyvals{
+			desc: "time default",
+			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
+			cfg:  DefaultConfig,
+			want: keyvals{
 				{"Date", stringVal("2009-02-13T23:31:30Z")},
 			},
 		},
 		{
-			"time w/o TextMarshalers",
-			struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
-			&Config{
+			desc: "time w/o TextMarshalers",
+			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
+			cfg: &Config{
 				NoTextMarshalers: true,
 			},
-			keyvals{
+			want: keyvals{
 				{"Date", keyvals{}},
 			},
 		},
 		{
-			"time w/ PrintStringers",
-			struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
-			&Config{
+			desc: "time w/ PrintStringers",
+			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
+			cfg: &Config{
 				PrintStringers: true,
 			},
-			keyvals{
+			want: keyvals{
 				{"Date", stringVal("2009-02-13 23:31:30 +0000 UTC")},
 			},
 		},
