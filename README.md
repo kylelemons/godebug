@@ -38,7 +38,7 @@ Documentation
 Documentation for this package is available at [godoc.org][doc]:
 
  * Pretty: [![godoc for godebug/pretty][prettyimg]][prettydoc]
- * Diff:   [![godoc for godebug/diff][diffimg]][prettydoc]
+ * Diff:   [![godoc for godebug/diff][diffimg]][diffdoc]
 
 [doc]:       https://godoc.org/
 [prettyimg]: https://godoc.org/github.com/kylelemons/godebug/pretty?status.png
