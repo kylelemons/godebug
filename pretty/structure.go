@@ -61,16 +61,20 @@ func (l keyvals) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 func (l keyvals) Less(i, j int) bool { return l[i].key < l[j].key }
 
 func (l keyvals) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
-	keyWidth := 0
+	padding := ""
+	inner := indent + " "
 
-	for _, kv := range l {
-		if kw := len(kv.key); kw > keyWidth {
-			keyWidth = kw
+	if !cfg.Compact && !cfg.Diffable {
+		keyWidth := 0
+		for _, kv := range l {
+			if kw := len(kv.key); kw > keyWidth {
+				keyWidth = kw
+			}
 		}
+		padding = strings.Repeat(" ", keyWidth+1)
+		inner += " " + padding
 	}
-	padding := strings.Repeat(" ", keyWidth+1)
 
-	inner := indent + "  " + padding
 	w.WriteByte('{')
 	for i, kv := range l {
 		if cfg.Compact {
@@ -83,14 +87,18 @@ func (l keyvals) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 			}
 			w.WriteString(kv.key)
 			w.WriteByte(':')
-			w.WriteString(padding[len(kv.key):])
+			if cfg.Diffable {
+				w.WriteByte(' ')
+			} else {
+				w.WriteString(padding[len(kv.key):])
+			}
 		}
 		kv.val.WriteTo(w, inner, cfg)
 		if i+1 < len(l) || cfg.Diffable {
 			w.WriteByte(',')
 		}
 	}
-	if !cfg.Compact && cfg.Diffable && len(l) > 0 {
+	if !cfg.Compact && cfg.Diffable {
 		w.WriteString("\n")
 		w.WriteString(indent)
 	}
