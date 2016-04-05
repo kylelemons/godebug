@@ -41,7 +41,7 @@ func (c *Config) val2node(val reflect.Value) node {
 		if s, ok := v.(fmt.Stringer); ok && c.PrintStringers {
 			return stringVal(s.String())
 		}
-		if t, ok := v.(encoding.TextMarshaler); ok && !c.NoTextMarshalers {
+		if t, ok := v.(encoding.TextMarshaler); ok && c.PrintTextMarshalers {
 			if raw, err := t.MarshalText(); err == nil { // if NOT an error
 				return stringVal(string(raw))
 			}

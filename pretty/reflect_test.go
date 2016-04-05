@@ -15,7 +15,6 @@
 package pretty
 
 import (
-	"net"
 	"reflect"
 	"testing"
 	"time"
@@ -94,11 +93,6 @@ func TestVal2nodeDefault(t *testing.T) {
 			raw:  3,
 			want: rawVal("3"),
 		},
-		{
-			desc: "TextMarshaler",
-			raw:  net.ParseIP("dead:beef::1"),
-			want: stringVal("dead:beef::1"),
-		},
 	}
 
 	for _, test := range tests {
@@ -141,17 +135,17 @@ func TestVal2node(t *testing.T) {
 			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
 			cfg:  DefaultConfig,
 			want: keyvals{
-				{"Date", stringVal("2009-02-13T23:31:30Z")},
+				{"Date", keyvals{}},
 			},
 		},
 		{
-			desc: "time w/o TextMarshalers",
+			desc: "time w/ PrintTextMarshalers",
 			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
 			cfg: &Config{
-				NoTextMarshalers: true,
+				PrintTextMarshalers: true,
 			},
 			want: keyvals{
-				{"Date", keyvals{}},
+				{"Date", stringVal("2009-02-13T23:31:30Z")},
 			},
 		},
 		{

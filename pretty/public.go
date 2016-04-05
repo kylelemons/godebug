@@ -33,10 +33,10 @@ type Config struct {
 	Diffable bool // Adds extra newlines for more easily diffable output.
 
 	// Field and value options
-	IncludeUnexported bool // Include unexported fields in output
-	PrintStringers    bool // Call String on a fmt.Stringer
-	NoTextMarshalers  bool // Don't automatically call MarshalText
-	SkipZeroFields    bool // Skip struct fields that have a zero value.
+	IncludeUnexported   bool // Include unexported fields in output
+	PrintStringers      bool // Call String on a fmt.Stringer
+	PrintTextMarshalers bool // Call MarshalText on an encoding.TextMarshaler
+	SkipZeroFields      bool // Skip struct fields that have a zero value.
 
 	// Output transforms
 	ShortList int // Maximum character length for short lists if nonzero.
