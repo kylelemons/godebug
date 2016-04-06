@@ -66,6 +66,17 @@ func TestWriteTo(t *testing.T) {
 ]`,
 		},
 		{
+			desc: "empty nested list",
+			node: list{list{}},
+			normal: `
+[[]]`,
+			diffable: `
+[
+ [
+ ],
+]`,
+		},
+		{
 			desc: "list",
 			node: list{
 				stringVal("zaphod"),
@@ -87,6 +98,17 @@ func TestWriteTo(t *testing.T) {
 {}`,
 			diffable: `
 {
+}`,
+		},
+		{
+			desc: "empty nested keyvals",
+			node: keyvals{{"k", keyvals{}}},
+			normal: `
+{k: {}}`,
+			diffable: `
+{
+ k: {
+ },
 }`,
 		},
 		{

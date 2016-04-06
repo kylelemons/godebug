@@ -61,47 +61,54 @@ func (l keyvals) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 func (l keyvals) Less(i, j int) bool { return l[i].key < l[j].key }
 
 func (l keyvals) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
-	padding := ""
-	inner := indent + " "
+	w.WriteByte('{')
 
-	if !cfg.Compact && !cfg.Diffable {
+	switch {
+	case cfg.Compact:
+		// All on one line:
+		for i, kv := range l {
+			if i > 0 {
+				w.WriteByte(',')
+			}
+			w.WriteString(kv.key)
+			w.WriteByte(':')
+			kv.val.WriteTo(w, indent, cfg)
+		}
+	case cfg.Diffable:
+		w.WriteByte('\n')
+		inner := indent + " "
+		// Each value gets its own line:
+		for _, kv := range l {
+			w.WriteString(inner)
+			w.WriteString(kv.key)
+			w.WriteString(": ")
+			kv.val.WriteTo(w, inner, cfg)
+			w.WriteString(",\n")
+		}
+		w.WriteString(indent)
+	default:
 		keyWidth := 0
 		for _, kv := range l {
 			if kw := len(kv.key); kw > keyWidth {
 				keyWidth = kw
 			}
 		}
-		padding = strings.Repeat(" ", keyWidth+1)
-		inner += " " + padding
+		alignKey := indent + " "
+		alignValue := strings.Repeat(" ", keyWidth)
+		inner := alignKey + alignValue + "  "
+		// First and last line shared with bracket:
+		for i, kv := range l {
+			if i > 0 {
+				w.WriteString(",\n")
+				w.WriteString(alignKey)
+			}
+			w.WriteString(kv.key)
+			w.WriteString(": ")
+			w.WriteString(alignValue[len(kv.key):])
+			kv.val.WriteTo(w, inner, cfg)
+		}
 	}
 
-	w.WriteByte('{')
-	for i, kv := range l {
-		if cfg.Compact {
-			w.WriteString(kv.key)
-			w.WriteByte(':')
-		} else {
-			if i > 0 || cfg.Diffable {
-				w.WriteString("\n ")
-				w.WriteString(indent)
-			}
-			w.WriteString(kv.key)
-			w.WriteByte(':')
-			if cfg.Diffable {
-				w.WriteByte(' ')
-			} else {
-				w.WriteString(padding[len(kv.key):])
-			}
-		}
-		kv.val.WriteTo(w, inner, cfg)
-		if i+1 < len(l) || cfg.Diffable {
-			w.WriteByte(',')
-		}
-	}
-	if !cfg.Compact && cfg.Diffable {
-		w.WriteString("\n")
-		w.WriteString(indent)
-	}
 	w.WriteByte('}')
 }
 
@@ -136,9 +143,7 @@ func (l list) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 			v.WriteTo(w, inner, cfg)
 			w.WriteString(",\n")
 		}
-		if len(l) > 0 {
-			w.WriteString(indent)
-		}
+		w.WriteString(indent)
 	default:
 		inner := indent + " "
 		// First and last line shared with bracket:
