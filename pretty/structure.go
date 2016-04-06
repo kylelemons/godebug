@@ -116,21 +116,40 @@ func (l list) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 		}
 	}
 
-	inner := indent + " "
 	w.WriteByte('[')
-	for i, v := range l {
-		if !cfg.Compact && (i > 0 || cfg.Diffable) {
-			w.WriteByte('\n')
-			w.WriteString(inner)
+
+	switch {
+	case cfg.Compact:
+		// All on one line:
+		for i, v := range l {
+			if i > 0 {
+				w.WriteByte(',')
+			}
+			v.WriteTo(w, indent, cfg)
 		}
-		v.WriteTo(w, inner, cfg)
-		if i+1 < len(l) || cfg.Diffable {
-			w.WriteByte(',')
-		}
-	}
-	if !cfg.Compact && cfg.Diffable && len(l) > 0 {
+	case cfg.Diffable:
 		w.WriteByte('\n')
-		w.WriteString(indent)
+		inner := indent + " "
+		// Each value gets its own line:
+		for _, v := range l {
+			w.WriteString(inner)
+			v.WriteTo(w, inner, cfg)
+			w.WriteString(",\n")
+		}
+		if len(l) > 0 {
+			w.WriteString(indent)
+		}
+	default:
+		inner := indent + " "
+		// First and last line shared with bracket:
+		for i, v := range l {
+			if i > 0 {
+				w.WriteString(",\n")
+				w.WriteString(inner)
+			}
+			v.WriteTo(w, inner, cfg)
+		}
 	}
+
 	w.WriteByte(']')
 }

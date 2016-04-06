@@ -16,27 +16,30 @@ package pretty
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
 func TestWriteTo(t *testing.T) {
 	tests := []struct {
-		desc     string
-		node     node
+		desc string
+		node node
+
+		// All strings have a leading newline trimmed before comparison:
 		normal   string
-		extended string
+		diffable string
 	}{
 		{
 			desc:     "string",
 			node:     stringVal("zaphod"),
 			normal:   `"zaphod"`,
-			extended: `"zaphod"`,
+			diffable: `"zaphod"`,
 		},
 		{
 			desc:     "raw",
 			node:     rawVal("42"),
 			normal:   `42`,
-			extended: `42`,
+			diffable: `42`,
 		},
 		{
 			desc: "keyvals",
@@ -44,12 +47,23 @@ func TestWriteTo(t *testing.T) {
 				{"name", stringVal("zaphod")},
 				{"age", rawVal("42")},
 			},
-			normal: `{name: "zaphod",
+			normal: `
+{name: "zaphod",
  age:  42}`,
-			extended: `{
+			diffable: `
+{
  name: "zaphod",
  age: 42,
 }`,
+		},
+		{
+			desc: "empty list",
+			node: list{},
+			normal: `
+[]`,
+			diffable: `
+[
+]`,
 		},
 		{
 			desc: "list",
@@ -57,12 +71,23 @@ func TestWriteTo(t *testing.T) {
 				stringVal("zaphod"),
 				rawVal("42"),
 			},
-			normal: `["zaphod",
+			normal: `
+["zaphod",
  42]`,
-			extended: `[
+			diffable: `
+[
  "zaphod",
  42,
 ]`,
+		},
+		{
+			desc: "empty keyvals",
+			node: keyvals{},
+			normal: `
+{}`,
+			diffable: `
+{
+}`,
 		},
 		{
 			desc: "nested",
@@ -81,7 +106,8 @@ func TestWriteTo(t *testing.T) {
 				},
 				keyvals{},
 			},
-			normal: `["first",
+			normal: `
+["first",
  [1,
   2,
   3],
@@ -90,7 +116,8 @@ func TestWriteTo(t *testing.T) {
   zaphod:   {occupation: "president of the galaxy",
              features:   "two heads"}},
  {}]`,
-			extended: `[
+			diffable: `
+[
  "first",
  [
   1,
@@ -114,6 +141,10 @@ func TestWriteTo(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		// For readability, we have a newline that won't be there in the output
+		test.normal = strings.TrimPrefix(test.normal, "\n")
+		test.diffable = strings.TrimPrefix(test.diffable, "\n")
+
 		buf := new(bytes.Buffer)
 		test.node.WriteTo(buf, "", &Config{})
 		if got, want := buf.String(), test.normal; got != want {
@@ -121,8 +152,8 @@ func TestWriteTo(t *testing.T) {
 		}
 		buf.Reset()
 		test.node.WriteTo(buf, "", &Config{Diffable: true})
-		if got, want := buf.String(), test.extended; got != want {
-			t.Errorf("%s: extended rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
+		if got, want := buf.String(), test.diffable; got != want {
+			t.Errorf("%s: diffable rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
 	}
 }
