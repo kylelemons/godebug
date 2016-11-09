@@ -82,7 +82,7 @@ func ExampleConfig_Sprint() {
 	// }
 }
 
-func ExampleConfig_FmtFormatter() {
+func ExampleConfig_fmtFormatter() {
 	pretty.DefaultFormatter[reflect.TypeOf(&net.IPNet{})] = fmt.Sprint
 	pretty.DefaultFormatter[reflect.TypeOf(net.HardwareAddr{})] = fmt.Sprint
 	pretty.Print(&net.IPNet{
@@ -96,7 +96,7 @@ func ExampleConfig_FmtFormatter() {
 	// 01:02:03:04:05:06
 }
 
-func ExampleConfig_CustomFormatter() {
+func ExampleConfig_customFormatter() {
 	pretty.DefaultFormatter[reflect.TypeOf(&net.IPNet{})] = func(n *net.IPNet) string {
 		return fmt.Sprintf("CIDR=%s", n)
 	}
