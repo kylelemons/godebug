@@ -137,9 +137,9 @@ func (cfg *Config) Fprint(w io.Writer, vals ...interface{}) (n int64, err error)
 // values in a and b, using the CompareConfig.
 //
 // Each line in the output is prefixed with '+', '-', or ' ' to indicate which
-// side it's from. Lines from the a side are marked with a '-', lines from the
-// b side are marked with a '+' and lines that are the same on both sides are
-// marked with a ' '.
+// side it's from. Lines from the a side are marked with '-', lines from the
+// b side are marked with '+' and lines that are the same on both sides are
+// marked with ' '.
 func Compare(a, b interface{}) string {
 	return CompareConfig.Compare(a, b)
 }
