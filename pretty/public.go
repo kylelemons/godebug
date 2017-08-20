@@ -66,6 +66,28 @@ type Config struct {
 	// method and the input will be provided as a value.  In that case,
 	// use a function that calls .String on the formal value parameter.
 	Formatter map[reflect.Type]interface{}
+
+	// Recursion control
+	//
+	// If TrackPointers is enabled, pretty will detect and track
+	// self-referential structures. If a self-referential structure (aka a
+	// "recursive" value) is detected, a certain amount of RecursiveContext
+	// within that structure will be kept. Further references within the object
+	// beyond this limit will be emitted as "...".
+	//
+	// The recommended default for RecursiveContext is 1.  Setting it to 0 will
+	// result in shorter output with no repetition, but things like Compare will
+	// be unable to tell exactly which of the parent objects were being
+	// referenced recursively.  If your structure is very deep or the recursive
+	// portions don't contain identifying detail, increasing this may help get
+	// an unambiguous representation.
+	//
+	// Pointer tracking is disabled by default for performance reasons.  If you
+	// turn it on, however, be aware that the results of Compare are limited to
+	// comparing only RecursiveContext, which may not be enough to perfectly
+	// guarantee "deep equality" if the context does not contain enough signal.
+	TrackPointers    bool
+	RecursiveContext int
 }
 
 // Default Config objects
@@ -88,14 +110,28 @@ var (
 	DefaultConfig = &Config{
 		Formatter: DefaultFormatter,
 	}
+
+	// Recursively is a convenience config for formatting and comparing recursive structures.
+	Recursively = &Config{
+		Diffable:         true,
+		Formatter:        DefaultFormatter,
+		TrackPointers:    true,
+		RecursiveContext: 1,
+	}
 )
 
 func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
+	ref := &reflector{
+		Config: cfg,
+	}
+	if cfg.TrackPointers {
+		ref.pointerTracker = new(pointerTracker)
+	}
 	for i, val := range vals {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
-		cfg.val2node(reflect.ValueOf(val)).WriteTo(buf, "", cfg)
+		ref.val2node(reflect.ValueOf(val)).WriteTo(buf, "", cfg)
 	}
 }
 

@@ -308,3 +308,89 @@ func ExampleCompare_debugging() {
 	// + Stolen: false,
 	//  }
 }
+
+type ListNode struct {
+	Value int
+	Next  *ListNode
+}
+
+func circular(nodes int) *ListNode {
+	final := &ListNode{
+		Value: nodes,
+	}
+	final.Next = final
+
+	recent := final
+	for i := nodes - 1; i > 0; i-- {
+		n := &ListNode{
+			Value: i,
+			Next:  recent,
+		}
+		final.Next = n
+		recent = n
+	}
+	return recent
+}
+
+func ExampleConfig_selfReferentialConfiguration() {
+	config := &pretty.Config{
+		TrackPointers:    true,
+		RecursiveContext: 3,
+	}
+	config.Print(circular(3))
+
+	// Output:
+	// {Value: 1,
+	//  Next:  {Value: 2,
+	//          Next:  {Value: 3,
+	//                  Next:  (recursive:) {Value: 1,
+	//                                       Next:  {Value: 2,
+	//                                               Next:  {Value: 3,
+	//                                                       Next:  ...}}}}}}
+}
+
+func ExamplePrint_defaultRecursivePrinting() {
+	pretty.Recursively.Print(circular(3))
+
+	// Output:
+	// {
+	//  Value: 1,
+	//  Next: {
+	//   Value: 2,
+	//   Next: {
+	//    Value: 3,
+	//    Next: (recursive:) {
+	//     Value: 1,
+	//     Next: ...,
+	//    },
+	//   },
+	//  },
+	// }
+}
+
+func ExampleConfig_Compare_selfReferential() {
+	got, want := circular(3), circular(4)
+	fmt.Printf("Diff: (-got +want)\n%s", pretty.Recursively.Compare(got, want))
+
+	// Output:
+	// Diff: (-got +want)
+	//  {
+	//   Value: 1,
+	//   Next: {
+	//    Value: 2,
+	//    Next: {
+	//     Value: 3,
+	// -   Next: (recursive:) {
+	// -    Value: 1,
+	// -    Next: ...,
+	// +   Next: {
+	// +    Value: 4,
+	// +    Next: (recursive:) {
+	// +     Value: 1,
+	// +     Next: ...,
+	// +    },
+	//     },
+	//    },
+	//   },
+	//  }
+}

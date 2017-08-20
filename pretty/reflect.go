@@ -29,25 +29,95 @@ func isZeroVal(val reflect.Value) bool {
 	return reflect.DeepEqual(val.Interface(), z)
 }
 
-func (c *Config) val2node(val reflect.Value) node {
-	// TODO(kevlar): pointer tracking?
+type pointerTracker struct {
+	addrs map[uintptr]int // addr[address] = seen count
+}
 
+// track tracks following a reference (pointer, slice, map, etc).  Every call to
+// track should be paired with a call to untrack.
+func (p *pointerTracker) track(ptr uintptr) {
+	if p.addrs == nil {
+		p.addrs = make(map[uintptr]int)
+	}
+	p.addrs[ptr]++
+}
+
+// seen returns whether the pointer was previously seen along this path.
+func (p *pointerTracker) seen(ptr uintptr) bool {
+	_, ok := p.addrs[ptr]
+	return ok
+}
+
+// untrack registers that we have backtracked over the reference to the pointer.
+func (p *pointerTracker) untrack(ptr uintptr) {
+	p.addrs[ptr]--
+	if p.addrs[ptr] == 0 {
+		delete(p.addrs, ptr)
+	}
+}
+
+type reflector struct {
+	*Config
+	*pointerTracker
+
+	inContext        bool
+	remainingContext int
+}
+
+// follow handles following a possiblly-recursive reference to the given value
+// from the given ptr address.
+func (ref *reflector) follow(ptr uintptr, val reflect.Value) (n node) {
+	if ref.pointerTracker == nil {
+		// Tracking disabled
+		return ref.val2node(val)
+	}
+
+	if ref.inContext {
+		// Decrement the context and restore it
+		ref.remainingContext--
+		defer func() {
+			ref.remainingContext++
+		}()
+
+		// If we've exhausted our context, don't recurse
+		if ref.remainingContext <= 0 {
+			return rawVal("...")
+		}
+	} else if ref.seen(ptr) {
+		// Make note that we're now in "context mode"
+		ref.inContext = true
+		ref.remainingContext = ref.RecursiveContext
+		// Wrap the return value with the recursive marker
+		defer func() {
+			ref.inContext = false
+			n = recursive{
+				value: n,
+			}
+		}()
+	}
+
+	ref.track(ptr)
+	defer ref.untrack(ptr)
+	return ref.val2node(val)
+}
+
+func (ref *reflector) val2node(val reflect.Value) node {
 	if !val.IsValid() {
 		return rawVal("nil")
 	}
 
 	if val.CanInterface() {
 		v := val.Interface()
-		if formatter, ok := c.Formatter[val.Type()]; ok {
+		if formatter, ok := ref.Formatter[val.Type()]; ok {
 			if formatter != nil {
 				res := reflect.ValueOf(formatter).Call([]reflect.Value{val})
 				return rawVal(res[0].Interface().(string))
 			}
 		} else {
-			if s, ok := v.(fmt.Stringer); ok && c.PrintStringers {
+			if s, ok := v.(fmt.Stringer); ok && ref.PrintStringers {
 				return stringVal(s.String())
 			}
-			if t, ok := v.(encoding.TextMarshaler); ok && c.PrintTextMarshalers {
+			if t, ok := v.(encoding.TextMarshaler); ok && ref.PrintTextMarshalers {
 				if raw, err := t.MarshalText(); err == nil { // if NOT an error
 					return stringVal(string(raw))
 				}
@@ -56,26 +126,43 @@ func (c *Config) val2node(val reflect.Value) node {
 	}
 
 	switch kind := val.Kind(); kind {
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Ptr:
 		if val.IsNil() {
 			return rawVal("nil")
 		}
-		return c.val2node(val.Elem())
+		return ref.follow(val.Pointer(), val.Elem())
+	case reflect.Interface:
+		if val.IsNil() {
+			return rawVal("nil")
+		}
+		return ref.val2node(val.Elem())
 	case reflect.String:
 		return stringVal(val.String())
-	case reflect.Slice, reflect.Array:
+	case reflect.Slice:
+		n := list{}
+		length := val.Len()
+		ptr := val.Pointer()
+		for i := 0; i < length; i++ {
+			n = append(n, ref.follow(ptr, val.Index(i)))
+		}
+		return n
+	case reflect.Array:
 		n := list{}
 		length := val.Len()
 		for i := 0; i < length; i++ {
-			n = append(n, c.val2node(val.Index(i)))
+			n = append(n, ref.val2node(val.Index(i)))
 		}
 		return n
 	case reflect.Map:
 		n := keyvals{}
 		keys := val.MapKeys()
+		ptr := val.Pointer()
 		for _, key := range keys {
 			// TODO(kevlar): Support arbitrary type keys?
-			n = append(n, keyval{compactString(c.val2node(key)), c.val2node(val.MapIndex(key))})
+			n = append(n, keyval{
+				key: compactString(ref.follow(ptr, key)),
+				val: ref.follow(ptr, val.MapIndex(key)),
+			})
 		}
 		sort.Sort(n)
 		return n
@@ -85,14 +172,14 @@ func (c *Config) val2node(val reflect.Value) node {
 		fields := typ.NumField()
 		for i := 0; i < fields; i++ {
 			sf := typ.Field(i)
-			if !c.IncludeUnexported && sf.PkgPath != "" {
+			if !ref.IncludeUnexported && sf.PkgPath != "" {
 				continue
 			}
 			field := val.Field(i)
-			if c.SkipZeroFields && isZeroVal(field) {
+			if ref.SkipZeroFields && isZeroVal(field) {
 				continue
 			}
-			n = append(n, keyval{sf.Name, c.val2node(field)})
+			n = append(n, keyval{sf.Name, ref.val2node(field)})
 		}
 		return n
 	case reflect.Bool:

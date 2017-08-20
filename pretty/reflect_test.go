@@ -121,7 +121,10 @@ func TestVal2nodeDefault(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := DefaultConfig.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
+		ref := &reflector{
+			Config: DefaultConfig,
+		}
+		if got, want := ref.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
 		}
 	}
@@ -132,6 +135,7 @@ func TestVal2node(t *testing.T) {
 		desc string
 		raw  interface{}
 		cfg  *Config
+		ptrs *pointerTracker
 		want node
 	}{
 		{
@@ -196,11 +200,92 @@ func TestVal2node(t *testing.T) {
 				{"Date", stringVal("2009-02-13 23:31:30 +0000 UTC")},
 			},
 		},
+		{
+			desc: "circular list context=1",
+			raw:  circular(3),
+			cfg: &Config{
+				TrackPointers:    true,
+				RecursiveContext: 1,
+			},
+			ptrs: new(pointerTracker),
+			want: keyvals{
+				{"Value", rawVal("1")},
+				{"Next", keyvals{
+					{"Value", rawVal("2")},
+					{"Next", keyvals{
+						{"Value", rawVal("3")},
+						{"Next", recursive{keyvals{
+							{"Value", rawVal("1")},
+							{"Next", rawVal("...")},
+						}}},
+					}},
+				}},
+			},
+		},
+		{
+			desc: "circular list context=3",
+			raw:  circular(3),
+			cfg: &Config{
+				TrackPointers:    true,
+				RecursiveContext: 3,
+			},
+			ptrs: new(pointerTracker),
+			want: keyvals{
+				{"Value", rawVal("1")},
+				{"Next", keyvals{
+					{"Value", rawVal("2")},
+					{"Next", keyvals{
+						{"Value", rawVal("3")},
+						{"Next", recursive{keyvals{
+							{"Value", rawVal("1")},
+							{"Next", keyvals{
+								{"Value", rawVal("2")},
+								{"Next", keyvals{
+									{"Value", rawVal("3")},
+									{"Next", rawVal("...")},
+								}},
+							}},
+						}}},
+					}},
+				}},
+			},
+		},
 	}
 
 	for _, test := range tests {
-		if got, want := test.cfg.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
-			t.Errorf("%s: got %#v, want %#v", test.desc, got, want)
+		ref := &reflector{
+			Config:         test.cfg,
+			pointerTracker: test.ptrs,
+		}
+		if got, want := ref.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
+			t.Run(test.desc, func(t *testing.T) {
+				t.Errorf(" got %#v", got)
+				t.Errorf("want %#v", want)
+				t.Errorf("Diff: (-got +want)\n%s", Compare(got, want))
+			})
 		}
 	}
+}
+
+type ListNode struct {
+	Value int
+	Next  *ListNode
+}
+
+func circular(nodes int) *ListNode {
+	final := &ListNode{
+		Value: nodes,
+	}
+	final.Next = final
+
+	recent := final
+	for i := nodes - 1; i > 0; i-- {
+		n := &ListNode{
+			Value: i,
+			Next:  recent,
+		}
+		final.Next = n
+		recent = n
+	}
+	return recent
 }

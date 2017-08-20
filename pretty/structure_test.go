@@ -160,6 +160,56 @@ func TestWriteTo(t *testing.T) {
  },
 ]`,
 		},
+		{
+			desc: "recursive",
+			node: keyvals{
+				{"Value", rawVal("1")},
+				{"Next", keyvals{
+					{"Value", rawVal("2")},
+					{"Next", keyvals{
+						{"Value", rawVal("3")},
+						{"Next", recursive{keyvals{
+							{"Value", rawVal("1")},
+							{"Next", keyvals{
+								{"Value", rawVal("2")},
+								{"Next", keyvals{
+									{"Value", rawVal("3")},
+									{"Next", rawVal("...")},
+								}},
+							}},
+						}}},
+					}},
+				}},
+			},
+			normal: `
+{Value: 1,
+ Next:  {Value: 2,
+         Next:  {Value: 3,
+                 Next:  (recursive:) {Value: 1,
+                                      Next:  {Value: 2,
+                                              Next:  {Value: 3,
+                                                      Next:  ...}}}}}}`,
+			diffable: `
+{
+ Value: 1,
+ Next: {
+  Value: 2,
+  Next: {
+   Value: 3,
+   Next: (recursive:) {
+    Value: 1,
+    Next: {
+     Value: 2,
+     Next: {
+      Value: 3,
+      Next: ...,
+     },
+    },
+   },
+  },
+ },
+}`,
+		},
 	}
 
 	for _, test := range tests {
