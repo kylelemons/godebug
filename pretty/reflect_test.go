@@ -204,3 +204,33 @@ func TestVal2node(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkVal2node(b *testing.B) {
+	benchmarks := []struct {
+		desc string
+		cfg  *Config
+		raw  interface{}
+	}{
+		{
+			desc: "struct",
+			cfg:  DefaultConfig,
+			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"}},
+		{
+			desc: "map",
+			cfg:  DefaultConfig,
+			raw: map[[2]int]string{
+				[2]int{-1, 2}: "school",
+				[2]int{0, 0}:  "origin",
+				[2]int{1, 3}:  "home",
+			},
+		},
+	}
+
+	for _, bench := range benchmarks {
+		b.Run(bench.desc, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				bench.cfg.val2node(reflect.ValueOf(bench.raw))
+			}
+		})
+	}
+}
