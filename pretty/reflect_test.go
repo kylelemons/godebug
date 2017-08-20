@@ -132,11 +132,11 @@ func TestVal2nodeDefault(t *testing.T) {
 
 func TestVal2node(t *testing.T) {
 	tests := []struct {
-		desc string
-		raw  interface{}
-		cfg  *Config
-		ptrs *pointerTracker
-		want node
+		desc  string
+		raw   interface{}
+		cfg   *Config
+		addrs map[uintptr]*label
+		want  node
 	}{
 		{
 			desc: "struct default",
@@ -201,67 +201,56 @@ func TestVal2node(t *testing.T) {
 			},
 		},
 		{
-			desc: "circular list context=1",
+			desc: "circular list",
 			raw:  circular(3),
 			cfg: &Config{
-				TrackPointers:    true,
-				RecursiveContext: 1,
+				TrackPointers: true,
 			},
-			ptrs: new(pointerTracker),
-			want: keyvals{
-				{"Value", rawVal("1")},
-				{"Next", keyvals{
-					{"Value", rawVal("2")},
+			addrs: make(map[uintptr]*label),
+			want: func() node {
+				l := &label{}
+				l.node = keyvals{
+					{"Value", rawVal("1")},
 					{"Next", keyvals{
-						{"Value", rawVal("3")},
-						{"Next", recursive{keyvals{
-							{"Value", rawVal("1")},
-							{"Next", rawVal("...")},
-						}}},
+						{"Value", rawVal("2")},
+						{"Next", keyvals{
+							{"Value", rawVal("3")},
+							{"Next", &refto{l}},
+						}},
 					}},
-				}},
-			},
+				}
+				return l
+			}(),
 		},
 		{
-			desc: "circular list context=3",
-			raw:  circular(3),
+			desc: "non-circular dup reference",
+			raw: func() interface{} {
+				type Object struct{ X int }
+				type ObjPair struct{ Obj1, Obj2 interface{} }
+				obj := &Object{11}
+				return &ObjPair{obj, obj}
+			}(),
 			cfg: &Config{
-				TrackPointers:    true,
-				RecursiveContext: 3,
+				TrackPointers: true,
 			},
-			ptrs: new(pointerTracker),
+			addrs: make(map[uintptr]*label),
 			want: keyvals{
-				{"Value", rawVal("1")},
-				{"Next", keyvals{
-					{"Value", rawVal("2")},
-					{"Next", keyvals{
-						{"Value", rawVal("3")},
-						{"Next", recursive{keyvals{
-							{"Value", rawVal("1")},
-							{"Next", keyvals{
-								{"Value", rawVal("2")},
-								{"Next", keyvals{
-									{"Value", rawVal("3")},
-									{"Next", rawVal("...")},
-								}},
-							}},
-						}}},
-					}},
-				}},
+				{"Obj1", keyvals{{"X", rawVal("11")}}},
+				{"Obj2", keyvals{{"X", rawVal("11")}}},
 			},
 		},
 	}
 
 	for _, test := range tests {
 		ref := &reflector{
-			Config:         test.cfg,
-			pointerTracker: test.ptrs,
+			Config: test.cfg,
+			addrs:  test.addrs,
 		}
 		if got, want := ref.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
 			t.Run(test.desc, func(t *testing.T) {
 				t.Errorf(" got %#v", got)
 				t.Errorf("want %#v", want)
-				t.Errorf("Diff: (-got +want)\n%s", Compare(got, want))
+				t.Errorf("Diff: (-got +want)\n%s", Recursively.Compare(got, want))
 			})
 		}
 	}
@@ -349,7 +338,7 @@ func BenchmarkVal2node(b *testing.B) {
 					Config: bench.cfg,
 				}
 				if bench.cfg.TrackPointers {
-					ref.pointerTracker = new(pointerTracker)
+					ref.addrs = make(map[uintptr]*label)
 				}
 				ref.val2node(reflect.ValueOf(bench.raw))
 			}

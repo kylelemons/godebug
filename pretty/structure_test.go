@@ -162,50 +162,35 @@ func TestWriteTo(t *testing.T) {
 		},
 		{
 			desc: "recursive",
-			node: keyvals{
-				{"Value", rawVal("1")},
-				{"Next", keyvals{
-					{"Value", rawVal("2")},
+			node: func() node {
+				l := &label{id: 1}
+				l.node = keyvals{
+					{"Value", rawVal("1")},
 					{"Next", keyvals{
-						{"Value", rawVal("3")},
-						{"Next", recursive{keyvals{
-							{"Value", rawVal("1")},
-							{"Next", keyvals{
-								{"Value", rawVal("2")},
-								{"Next", keyvals{
-									{"Value", rawVal("3")},
-									{"Next", rawVal("...")},
-								}},
-							}},
-						}}},
+						{"Value", rawVal("2")},
+						{"Next", keyvals{
+							{"Value", rawVal("3")},
+							{"Next", &refto{l}},
+						}},
 					}},
-				}},
-			},
+				}
+				return l
+			}(),
 			normal: `
+<1>:
 {Value: 1,
  Next:  {Value: 2,
          Next:  {Value: 3,
-                 Next:  (recursive:) {Value: 1,
-                                      Next:  {Value: 2,
-                                              Next:  {Value: 3,
-                                                      Next:  ...}}}}}}`,
+                 Next:  -> <1>}}}`,
 			diffable: `
+<1>:
 {
  Value: 1,
  Next: {
   Value: 2,
   Next: {
    Value: 3,
-   Next: (recursive:) {
-    Value: 1,
-    Next: {
-     Value: 2,
-     Next: {
-      Value: 3,
-      Next: ...,
-     },
-    },
-   },
+   Next: -> <1>,
   },
  },
 }`,
@@ -218,12 +203,12 @@ func TestWriteTo(t *testing.T) {
 		test.diffable = strings.TrimPrefix(test.diffable, "\n")
 
 		buf := new(bytes.Buffer)
-		test.node.WriteTo(buf, "", &Config{})
+		test.node.WriteTo(buf, "", &writeout{Config: &Config{}})
 		if got, want := buf.String(), test.normal; got != want {
 			t.Errorf("%s: normal rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
 		buf.Reset()
-		test.node.WriteTo(buf, "", &Config{Diffable: true})
+		test.node.WriteTo(buf, "", &writeout{Config: &Config{Diffable: true}})
 		if got, want := buf.String(), test.diffable; got != want {
 			t.Errorf("%s: diffable rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
@@ -327,7 +312,7 @@ func TestShortList(t *testing.T) {
 
 	for _, test := range tests {
 		buf := new(bytes.Buffer)
-		test.node.WriteTo(buf, "", cfg)
+		test.node.WriteTo(buf, "", &writeout{Config: cfg})
 		if got, want := buf.String(), test.want; got != want {
 			t.Errorf("%#v: got:\n%s\nwant:\n%s", test.node, got, want)
 		}
@@ -350,13 +335,13 @@ var benchNode = keyvals{
 
 func benchOpts(b *testing.B, cfg *Config) {
 	buf := new(bytes.Buffer)
-	benchNode.WriteTo(buf, "", cfg)
+	benchNode.WriteTo(buf, "", &writeout{Config: cfg})
 	b.SetBytes(int64(buf.Len()))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		buf.Reset()
-		benchNode.WriteTo(buf, "", cfg)
+		benchNode.WriteTo(buf, "", &writeout{Config: cfg})
 	}
 }
 

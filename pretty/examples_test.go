@@ -334,35 +334,30 @@ func circular(nodes int) *ListNode {
 
 func ExampleConfig_selfReferentialConfiguration() {
 	config := &pretty.Config{
-		TrackPointers:    true,
-		RecursiveContext: 3,
+		TrackPointers: true,
 	}
 	config.Print(circular(3))
 
 	// Output:
+	// <1>:
 	// {Value: 1,
 	//  Next:  {Value: 2,
 	//          Next:  {Value: 3,
-	//                  Next:  (recursive:) {Value: 1,
-	//                                       Next:  {Value: 2,
-	//                                               Next:  {Value: 3,
-	//                                                       Next:  ...}}}}}}
+	//                  Next:  -> <1>}}}
 }
 
 func ExamplePrint_defaultRecursivePrinting() {
 	pretty.Recursively.Print(circular(3))
 
 	// Output:
+	// <1>:
 	// {
 	//  Value: 1,
 	//  Next: {
 	//   Value: 2,
 	//   Next: {
 	//    Value: 3,
-	//    Next: (recursive:) {
-	//     Value: 1,
-	//     Next: ...,
-	//    },
+	//    Next: -> <1>,
 	//   },
 	//  },
 	// }
@@ -374,22 +369,18 @@ func ExampleConfig_Compare_selfReferential() {
 
 	// Output:
 	// Diff: (-got +want)
+	//  <1>:
 	//  {
 	//   Value: 1,
 	//   Next: {
 	//    Value: 2,
 	//    Next: {
 	//     Value: 3,
-	// -   Next: (recursive:) {
-	// -    Value: 1,
-	// -    Next: ...,
+	// -   Next: -> <1>,
 	// +   Next: {
 	// +    Value: 4,
-	// +    Next: (recursive:) {
-	// +     Value: 1,
-	// +     Next: ...,
-	// +    },
-	//     },
+	// +    Next: -> <1>,
+	// +   },
 	//    },
 	//   },
 	//  }

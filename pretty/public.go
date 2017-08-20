@@ -71,23 +71,11 @@ type Config struct {
 	//
 	// If TrackPointers is enabled, pretty will detect and track
 	// self-referential structures. If a self-referential structure (aka a
-	// "recursive" value) is detected, a certain amount of RecursiveContext
-	// within that structure will be kept. Further references within the object
-	// beyond this limit will be emitted as "...".
+	// "recursive" value) is detected, a label will be used to represent
+	// cyclic reference.
 	//
-	// The recommended default for RecursiveContext is 1.  Setting it to 0 will
-	// result in shorter output with no repetition, but things like Compare will
-	// be unable to tell exactly which of the parent objects were being
-	// referenced recursively.  If your structure is very deep or the recursive
-	// portions don't contain identifying detail, increasing this may help get
-	// an unambiguous representation.
-	//
-	// Pointer tracking is disabled by default for performance reasons.  If you
-	// turn it on, however, be aware that the results of Compare are limited to
-	// comparing only RecursiveContext, which may not be enough to perfectly
-	// guarantee "deep equality" if the context does not contain enough signal.
-	TrackPointers    bool
-	RecursiveContext int
+	// Pointer tracking is disabled by default for performance reasons.
+	TrackPointers bool
 }
 
 // Default Config objects
@@ -113,10 +101,9 @@ var (
 
 	// Recursively is a convenience config for formatting and comparing recursive structures.
 	Recursively = &Config{
-		Diffable:         true,
-		Formatter:        DefaultFormatter,
-		TrackPointers:    true,
-		RecursiveContext: 1,
+		Diffable:      true,
+		Formatter:     DefaultFormatter,
+		TrackPointers: true,
 	}
 )
 
@@ -125,13 +112,14 @@ func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 		Config: cfg,
 	}
 	if cfg.TrackPointers {
-		ref.pointerTracker = new(pointerTracker)
+		ref.addrs = make(map[uintptr]*label)
 	}
 	for i, val := range vals {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
-		ref.val2node(reflect.ValueOf(val)).WriteTo(buf, "", cfg)
+		w := &writeout{Config: cfg}
+		ref.val2node(reflect.ValueOf(val)).WriteTo(buf, "", w)
 	}
 }
 

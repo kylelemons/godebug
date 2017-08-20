@@ -29,76 +29,46 @@ func isZeroVal(val reflect.Value) bool {
 	return reflect.DeepEqual(val.Interface(), z)
 }
 
-type pointerTracker struct {
-	addrs map[uintptr]int // addr[address] = seen count
-}
-
-// track tracks following a reference (pointer, slice, map, etc).  Every call to
-// track should be paired with a call to untrack.
-func (p *pointerTracker) track(ptr uintptr) {
-	if p.addrs == nil {
-		p.addrs = make(map[uintptr]int)
-	}
-	p.addrs[ptr]++
-}
-
-// seen returns whether the pointer was previously seen along this path.
-func (p *pointerTracker) seen(ptr uintptr) bool {
-	_, ok := p.addrs[ptr]
-	return ok
-}
-
-// untrack registers that we have backtracked over the reference to the pointer.
-func (p *pointerTracker) untrack(ptr uintptr) {
-	p.addrs[ptr]--
-	if p.addrs[ptr] == 0 {
-		delete(p.addrs, ptr)
-	}
-}
-
 type reflector struct {
 	*Config
-	*pointerTracker
 
-	inContext        bool
-	remainingContext int
+	// whether an address was seen while traversing current path:
+	//
+	// key not present - have not seen this addr at all
+	// nil - seen but label not yet created
+	// !nil - label created
+	addrs map[uintptr]*label
 }
 
 // follow handles following a possiblly-recursive reference to the given value
 // from the given ptr address.
 func (ref *reflector) follow(ptr uintptr, val reflect.Value) (n node) {
-	if ref.pointerTracker == nil {
-		// Tracking disabled
+	if ref.addrs == nil {
+		// pointer tracking disabled
 		return ref.val2node(val)
 	}
 
-	if ref.inContext {
-		// Decrement the context and restore it
-		ref.remainingContext--
-		defer func() {
-			ref.remainingContext++
-		}()
-
-		// If we've exhausted our context, don't recurse
-		if ref.remainingContext <= 0 {
-			return rawVal("...")
+	// if ptr was already seen - just create a reference to it
+	if l, seen := ref.addrs[ptr]; seen {
+		if l == nil {
+			l = &label{id: 0, node: nil}
+			ref.addrs[ptr] = l
 		}
-	} else if ref.seen(ptr) {
-		// Make note that we're now in "context mode"
-		ref.inContext = true
-		ref.remainingContext = ref.RecursiveContext
-		// Wrap the return value with the recursive marker
-		defer func() {
-			ref.inContext = false
-			n = recursive{
-				value: n,
-			}
-		}()
+
+		return &refto{label: l}
 	}
 
-	ref.track(ptr)
-	defer ref.untrack(ptr)
-	return ref.val2node(val)
+	// recursively convert value to node and if value was
+	// pointer-referenced inside bind label to created node.
+	ref.addrs[ptr] = nil
+	n = ref.val2node(val)
+	l := ref.addrs[ptr]
+	if l != nil {
+		l.node = n
+		n = l
+	}
+	delete(ref.addrs, ptr)
+	return n
 }
 
 func (ref *reflector) val2node(val reflect.Value) node {
