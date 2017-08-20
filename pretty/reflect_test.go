@@ -203,9 +203,7 @@ func TestVal2node(t *testing.T) {
 		{
 			desc: "circular list",
 			raw:  circular(3),
-			cfg: &Config{
-				TrackPointers: true,
-			},
+			cfg:  DefaultConfig,
 			addrs: make(map[uintptr]*label),
 			want: func() node {
 				l := &label{}
@@ -230,9 +228,7 @@ func TestVal2node(t *testing.T) {
 				obj := &Object{11}
 				return &ObjPair{obj, obj}
 			}(),
-			cfg: &Config{
-				TrackPointers: true,
-			},
+			cfg: DefaultConfig,
 			addrs: make(map[uintptr]*label),
 			want: keyvals{
 				{"Obj1", keyvals{{"X", rawVal("11")}}},
@@ -250,7 +246,7 @@ func TestVal2node(t *testing.T) {
 			t.Run(test.desc, func(t *testing.T) {
 				t.Errorf(" got %#v", got)
 				t.Errorf("want %#v", want)
-				t.Errorf("Diff: (-got +want)\n%s", Recursively.Compare(got, want))
+				t.Errorf("Diff: (-got +want)\n%s", Compare(got, want))
 			})
 		}
 	}
@@ -286,6 +282,20 @@ func BenchmarkVal2node(b *testing.B) {
 		raw  interface{}
 	}{
 		{
+			desc: "acyclic/struct",
+			cfg:  Acyclic,
+			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
+		},
+		{
+			desc: "acyclic/map",
+			cfg:  Acyclic,
+			raw: map[[2]int]string{
+				[2]int{-1, 2}: "school",
+				[2]int{0, 0}:  "origin",
+				[2]int{1, 3}:  "home",
+			},
+		},
+		{
 			desc: "struct",
 			cfg:  DefaultConfig,
 			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
@@ -300,32 +310,18 @@ func BenchmarkVal2node(b *testing.B) {
 			},
 		},
 		{
-			desc: "track/struct",
-			cfg:  Recursively,
-			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
-		},
-		{
-			desc: "track/map",
-			cfg:  Recursively,
-			raw: map[[2]int]string{
-				[2]int{-1, 2}: "school",
-				[2]int{0, 0}:  "origin",
-				[2]int{1, 3}:  "home",
-			},
-		},
-		{
 			desc: "circlist/small",
-			cfg:  Recursively,
+			cfg:  DefaultConfig,
 			raw:  circular(3),
 		},
 		{
 			desc: "circlist/med",
-			cfg:  Recursively,
+			cfg:  DefaultConfig,
 			raw:  circular(300),
 		},
 		{
 			desc: "circlist/large",
-			cfg:  Recursively,
+			cfg:  DefaultConfig,
 			raw:  circular(3000),
 		},
 	}
@@ -337,7 +333,7 @@ func BenchmarkVal2node(b *testing.B) {
 				ref := &reflector{
 					Config: bench.cfg,
 				}
-				if bench.cfg.TrackPointers {
+				if !bench.cfg.AssumeAcyclic {
 					ref.addrs = make(map[uintptr]*label)
 				}
 				ref.val2node(reflect.ValueOf(bench.raw))

@@ -332,11 +332,8 @@ func circular(nodes int) *ListNode {
 	return recent
 }
 
-func ExampleConfig_selfReferentialConfiguration() {
-	config := &pretty.Config{
-		TrackPointers: true,
-	}
-	config.Print(circular(3))
+func ExamplePrint_defaultRecursivePrinting() {
+	pretty.Print(circular(3))
 
 	// Output:
 	// <1>:
@@ -346,8 +343,11 @@ func ExampleConfig_selfReferentialConfiguration() {
 	//                  Next:  -> <1>}}}
 }
 
-func ExamplePrint_defaultRecursivePrinting() {
-	pretty.Recursively.Print(circular(3))
+func ExampleConfig_recursiveDiffable() {
+	config := &pretty.Config{
+		Diffable: true,
+	}
+	config.Print(circular(3))
 
 	// Output:
 	// <1>:
@@ -365,7 +365,7 @@ func ExamplePrint_defaultRecursivePrinting() {
 
 func ExampleConfig_Compare_selfReferential() {
 	got, want := circular(3), circular(4)
-	fmt.Printf("Diff: (-got +want)\n%s", pretty.Recursively.Compare(got, want))
+	fmt.Printf("Diff: (-got +want)\n%s", pretty.Compare(got, want))
 
 	// Output:
 	// Diff: (-got +want)

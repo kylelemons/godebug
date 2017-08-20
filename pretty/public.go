@@ -69,13 +69,14 @@ type Config struct {
 
 	// Recursion control
 	//
-	// If TrackPointers is enabled, pretty will detect and track
-	// self-referential structures. If a self-referential structure (aka a
-	// "recursive" value) is detected, a label will be used to represent
-	// cyclic reference.
+	// Pretty detects and tracks self-referential structures via pointer-tracking.
+	// If a self-referential structure (aka a "recursive" value) is
+	// detected, a label will be used to represent cyclic reference.
 	//
-	// Pointer tracking is disabled by default for performance reasons.
-	TrackPointers bool
+	// Pointer tracking can be disabled for performance reasons with
+	// AssumeAcyclic if one knows for sure that printed data structures do
+	// not contain cycles.
+	AssumeAcyclic bool
 }
 
 // Default Config objects
@@ -99,11 +100,11 @@ var (
 		Formatter: DefaultFormatter,
 	}
 
-	// Recursively is a convenience config for formatting and comparing recursive structures.
-	Recursively = &Config{
-		Diffable:      true,
-		Formatter:     DefaultFormatter,
-		TrackPointers: true,
+	// Acyclic is a convenience config for formatting and comparing non-recursive structures.
+	Acyclic = &Config{
+		Diffable:  true,
+		Formatter: DefaultFormatter,
+		AssumeAcyclic:   true,
 	}
 )
 
@@ -111,7 +112,7 @@ func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 	ref := &reflector{
 		Config: cfg,
 	}
-	if cfg.TrackPointers {
+	if !cfg.AssumeAcyclic {
 		ref.addrs = make(map[uintptr]*label)
 	}
 	for i, val := range vals {
