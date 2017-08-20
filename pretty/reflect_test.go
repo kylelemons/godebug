@@ -299,7 +299,8 @@ func BenchmarkVal2node(b *testing.B) {
 		{
 			desc: "struct",
 			cfg:  DefaultConfig,
-			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"}},
+			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
+		},
 		{
 			desc: "map",
 			cfg:  DefaultConfig,
@@ -309,12 +310,48 @@ func BenchmarkVal2node(b *testing.B) {
 				[2]int{1, 3}:  "home",
 			},
 		},
+		{
+			desc: "track/struct",
+			cfg:  Recursively,
+			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
+		},
+		{
+			desc: "track/map",
+			cfg:  Recursively,
+			raw: map[[2]int]string{
+				[2]int{-1, 2}: "school",
+				[2]int{0, 0}:  "origin",
+				[2]int{1, 3}:  "home",
+			},
+		},
+		{
+			desc: "circlist/small",
+			cfg:  Recursively,
+			raw:  circular(3),
+		},
+		{
+			desc: "circlist/med",
+			cfg:  Recursively,
+			raw:  circular(300),
+		},
+		{
+			desc: "circlist/large",
+			cfg:  Recursively,
+			raw:  circular(3000),
+		},
 	}
 
 	for _, bench := range benchmarks {
 		b.Run(bench.desc, func(b *testing.B) {
+			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				bench.cfg.val2node(reflect.ValueOf(bench.raw))
+				ref := &reflector{
+					Config: bench.cfg,
+				}
+				if bench.cfg.TrackPointers {
+					ref.pointerTracker = new(pointerTracker)
+				}
+				ref.val2node(reflect.ValueOf(bench.raw))
 			}
 		})
 	}
