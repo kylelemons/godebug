@@ -29,6 +29,7 @@ func isZeroVal(val reflect.Value) bool {
 	return reflect.DeepEqual(val.Interface(), z)
 }
 
+// pointerTracker is a helper for tracking pointer chasing to detect cycles.
 type pointerTracker struct {
 	addrs map[uintptr]int // addr[address] = seen count
 
@@ -80,12 +81,10 @@ func (p *pointerTracker) id(ptr uintptr) (int, bool) {
 	return id, ok
 }
 
+// reflector adds local state to the recursive reflection logic.
 type reflector struct {
 	*Config
 	*pointerTracker
-
-	inContext        bool
-	remainingContext int
 }
 
 // follow handles following a possiblly-recursive reference to the given value
@@ -107,7 +106,7 @@ func (r *reflector) follow(ptr uintptr, val reflect.Value) node {
 	defer r.untrack(ptr)
 	n := r.val2node(val)
 
-	// If the recursion used this IP, wrap it with a target marker
+	// If the recursion used this ptr, wrap it with a target marker
 	if id, ok := r.id(ptr); ok {
 		return target{id, n}
 	}
