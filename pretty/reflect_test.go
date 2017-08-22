@@ -135,7 +135,6 @@ func TestVal2node(t *testing.T) {
 		desc string
 		raw  interface{}
 		cfg  *Config
-		ptrs *pointerTracker
 		want node
 	}{
 		{
@@ -204,7 +203,6 @@ func TestVal2node(t *testing.T) {
 			desc: "circular list",
 			raw:  circular(3),
 			cfg:  CycleTracker,
-			ptrs: new(pointerTracker),
 			want: target{1, keyvals{
 				{"Value", rawVal("1")},
 				{"Next", keyvals{
@@ -218,9 +216,8 @@ func TestVal2node(t *testing.T) {
 		},
 		{
 			desc: "self referential maps",
-			raw:  sefRef(),
+			raw:  selfRef(),
 			cfg:  CycleTracker,
-			ptrs: new(pointerTracker),
 			want: target{1, keyvals{
 				{"ID", rawVal("1")},
 				{"Child", keyvals{
@@ -247,8 +244,7 @@ func TestVal2node(t *testing.T) {
 				"2. two":   circular(2),
 				"3. three": circular(1),
 			},
-			cfg:  CycleTracker,
-			ptrs: new(pointerTracker),
+			cfg: CycleTracker,
 			want: keyvals{
 				{"1. one", target{1, keyvals{
 					{"Value", rawVal("1")},
@@ -271,8 +267,10 @@ func TestVal2node(t *testing.T) {
 
 	for _, test := range tests {
 		ref := &reflector{
-			Config:         test.cfg,
-			pointerTracker: test.ptrs,
+			Config: test.cfg,
+		}
+		if test.cfg.TrackCycles {
+			ref.pointerTracker = new(pointerTracker)
 		}
 		if got, want := ref.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
 			t.Run(test.desc, func(t *testing.T) {
@@ -312,7 +310,7 @@ type SelfReferential struct {
 	Child map[int]*SelfReferential
 }
 
-func sefRef() *SelfReferential {
+func selfRef() *SelfReferential {
 	sr1 := &SelfReferential{
 		ID:    1,
 		Child: make(map[int]*SelfReferential),
@@ -334,7 +332,6 @@ func sefRef() *SelfReferential {
 	// Throw in some other stuff for funzies
 	sr3.Child[2] = sr2
 	sr3.Child[3] = sr3
-	//sr1.Child[3] = sr3
 	return sr1
 }
 
@@ -386,6 +383,20 @@ func BenchmarkVal2node(b *testing.B) {
 			desc: "circlist/large",
 			cfg:  CycleTracker,
 			raw:  circular(3000),
+		},
+		{
+			desc: "mapofcirc/small",
+			cfg:  CycleTracker,
+			raw: map[string]*ListNode{
+				"1. one":   circular(1),
+				"2. two":   circular(2),
+				"3. three": circular(1),
+			},
+		},
+		{
+			desc: "selfrefmap/small",
+			cfg:  CycleTracker,
+			raw:  selfRef,
 		},
 	}
 
