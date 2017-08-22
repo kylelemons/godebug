@@ -57,10 +57,6 @@ type keyval struct {
 
 type keyvals []keyval
 
-func (l keyvals) Len() int           { return len(l) }
-func (l keyvals) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-func (l keyvals) Less(i, j int) bool { return l[i].key < l[j].key }
-
 func (l keyvals) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 	w.WriteByte('{')
 

@@ -169,17 +169,25 @@ func (r *reflector) val2node(val reflect.Value) node {
 		}
 		return n
 	case reflect.Map:
-		n := keyvals{}
+		// Extract the keys and sort them for stable iteration
 		keys := val.MapKeys()
-		ptr := val.Pointer()
+		pairs := make([]mapPair, 0, len(keys))
 		for _, key := range keys {
-			// TODO(kevlar): Support arbitrary type keys?
-			n = append(n, keyval{
-				key: compactString(r.follow(ptr, key)),
-				val: r.follow(ptr, val.MapIndex(key)),
+			pairs = append(pairs, mapPair{
+				key:   compactString(r.val2node(key)), // can't be cyclic
+				value: val.MapIndex(key),
 			})
 		}
-		sort.Sort(n)
+		sort.Sort(byKey(pairs))
+
+		// Process the keys into the final representation
+		ptr, n := val.Pointer(), keyvals{}
+		for _, pair := range pairs {
+			n = append(n, keyval{
+				key: pair.key,
+				val: r.follow(ptr, pair.value),
+			})
+		}
 		return n
 	case reflect.Struct:
 		n := keyvals{}
@@ -221,3 +229,14 @@ func (r *reflector) val2node(val reflect.Value) node {
 
 	return rawVal(val.String())
 }
+
+type mapPair struct {
+	key   string
+	value reflect.Value
+}
+
+type byKey []mapPair
+
+func (v byKey) Len() int           { return len(v) }
+func (v byKey) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
+func (v byKey) Less(i, j int) bool { return v[i].key < v[j].key }

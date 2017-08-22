@@ -203,9 +203,7 @@ func TestVal2node(t *testing.T) {
 		{
 			desc: "circular list",
 			raw:  circular(3),
-			cfg: &Config{
-				TrackCycles: true,
-			},
+			cfg:  CycleTracker,
 			ptrs: new(pointerTracker),
 			want: target{1, keyvals{
 				{"Value", rawVal("1")},
@@ -217,6 +215,57 @@ func TestVal2node(t *testing.T) {
 					}},
 				}},
 			}},
+		},
+		{
+			desc: "self referential maps",
+			raw:  sefRef(),
+			cfg:  CycleTracker,
+			ptrs: new(pointerTracker),
+			want: target{1, keyvals{
+				{"ID", rawVal("1")},
+				{"Child", keyvals{
+					{"2", target{2, keyvals{
+						{"ID", rawVal("2")},
+						{"Child", keyvals{
+							{"3", target{3, keyvals{
+								{"ID", rawVal("3")},
+								{"Child", keyvals{
+									{"1", ref{1}},
+									{"2", ref{2}},
+									{"3", ref{3}},
+								}},
+							}}},
+						}},
+					}}},
+				}},
+			}},
+		},
+		{
+			desc: "maps of cycles",
+			raw: map[string]*ListNode{
+				"1. one":   circular(1),
+				"2. two":   circular(2),
+				"3. three": circular(1),
+			},
+			cfg:  CycleTracker,
+			ptrs: new(pointerTracker),
+			want: keyvals{
+				{"1. one", target{1, keyvals{
+					{"Value", rawVal("1")},
+					{"Next", ref{1}},
+				}}},
+				{"2. two", target{2, keyvals{
+					{"Value", rawVal("1")},
+					{"Next", keyvals{
+						{"Value", rawVal("2")},
+						{"Next", ref{2}},
+					}},
+				}}},
+				{"3. three", target{3, keyvals{
+					{"Value", rawVal("1")},
+					{"Next", ref{3}},
+				}}},
+			},
 		},
 	}
 
@@ -256,6 +305,37 @@ func circular(nodes int) *ListNode {
 		recent = n
 	}
 	return recent
+}
+
+type SelfReferential struct {
+	ID    int
+	Child map[int]*SelfReferential
+}
+
+func sefRef() *SelfReferential {
+	sr1 := &SelfReferential{
+		ID:    1,
+		Child: make(map[int]*SelfReferential),
+	}
+	sr2 := &SelfReferential{
+		ID:    2,
+		Child: make(map[int]*SelfReferential),
+	}
+	sr3 := &SelfReferential{
+		ID:    3,
+		Child: make(map[int]*SelfReferential),
+	}
+
+	// Build a cycle
+	sr1.Child[2] = sr2
+	sr2.Child[3] = sr3
+	sr3.Child[1] = sr1
+
+	// Throw in some other stuff for funzies
+	sr3.Child[2] = sr2
+	sr3.Child[3] = sr3
+	//sr1.Child[3] = sr3
+	return sr1
 }
 
 func BenchmarkVal2node(b *testing.B) {
