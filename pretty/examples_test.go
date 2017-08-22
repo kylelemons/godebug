@@ -332,64 +332,41 @@ func circular(nodes int) *ListNode {
 	return recent
 }
 
-func ExampleConfig_selfReferentialConfiguration() {
-	config := &pretty.Config{
-		TrackPointers:    true,
-		RecursiveContext: 3,
-	}
-	config.Print(circular(3))
+func ExamplePrint_printingWithCycles() {
+	pretty.CycleTracker.Print(circular(3))
 
 	// Output:
-	// {Value: 1,
-	//  Next:  {Value: 2,
-	//          Next:  {Value: 3,
-	//                  Next:  (recursive:) {Value: 1,
-	//                                       Next:  {Value: 2,
-	//                                               Next:  {Value: 3,
-	//                                                       Next:  ...}}}}}}
-}
-
-func ExamplePrint_defaultRecursivePrinting() {
-	pretty.Recursively.Print(circular(3))
-
-	// Output:
-	// {
+	// (ref#1) {
 	//  Value: 1,
 	//  Next: {
 	//   Value: 2,
 	//   Next: {
 	//    Value: 3,
-	//    Next: (recursive:) {
-	//     Value: 1,
-	//     Next: ...,
-	//    },
+	//    Next: ... ref#1,
 	//   },
 	//  },
 	// }
 }
 
-func ExampleConfig_Compare_selfReferential() {
-	got, want := circular(3), circular(4)
-	fmt.Printf("Diff: (-got +want)\n%s", pretty.Recursively.Compare(got, want))
+func ExampleConfig_Compare_withCycles() {
+	got, want := circular(3), circular(3)
+
+	// Make the got one broken
+	got.Next.Next.Next = got.Next
+
+	fmt.Printf("Diff: (-got +want)\n%s", pretty.CycleTracker.Compare(got, want))
 
 	// Output:
 	// Diff: (-got +want)
-	//  {
+	// -{
+	// +(ref#1) {
 	//   Value: 1,
-	//   Next: {
+	// - Next: (ref#1) {
+	// + Next: {
 	//    Value: 2,
 	//    Next: {
 	//     Value: 3,
-	// -   Next: (recursive:) {
-	// -    Value: 1,
-	// -    Next: ...,
-	// +   Next: {
-	// +    Value: 4,
-	// +    Next: (recursive:) {
-	// +     Value: 1,
-	// +     Next: ...,
-	// +    },
-	//     },
+	//     Next: ... ref#1,
 	//    },
 	//   },
 	//  }

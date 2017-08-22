@@ -162,50 +162,29 @@ func TestWriteTo(t *testing.T) {
 		},
 		{
 			desc: "recursive",
-			node: keyvals{
+			node: target{1, keyvals{
 				{"Value", rawVal("1")},
 				{"Next", keyvals{
 					{"Value", rawVal("2")},
 					{"Next", keyvals{
 						{"Value", rawVal("3")},
-						{"Next", recursive{keyvals{
-							{"Value", rawVal("1")},
-							{"Next", keyvals{
-								{"Value", rawVal("2")},
-								{"Next", keyvals{
-									{"Value", rawVal("3")},
-									{"Next", rawVal("...")},
-								}},
-							}},
-						}}},
+						{"Next", ref{1}},
 					}},
 				}},
-			},
+			}},
 			normal: `
-{Value: 1,
- Next:  {Value: 2,
-         Next:  {Value: 3,
-                 Next:  (recursive:) {Value: 1,
-                                      Next:  {Value: 2,
-                                              Next:  {Value: 3,
-                                                      Next:  ...}}}}}}`,
+(ref#1) {Value: 1,
+         Next:  {Value: 2,
+                 Next:  {Value: 3,
+                         Next:  ... ref#1}}}`,
 			diffable: `
-{
+(ref#1) {
  Value: 1,
  Next: {
   Value: 2,
   Next: {
    Value: 3,
-   Next: (recursive:) {
-    Value: 1,
-    Next: {
-     Value: 2,
-     Next: {
-      Value: 3,
-      Next: ...,
-     },
-    },
-   },
+   Next: ... ref#1,
   },
  },
 }`,

@@ -201,54 +201,22 @@ func TestVal2node(t *testing.T) {
 			},
 		},
 		{
-			desc: "circular list context=1",
+			desc: "circular list",
 			raw:  circular(3),
 			cfg: &Config{
-				TrackPointers:    true,
-				RecursiveContext: 1,
+				TrackCycles: true,
 			},
 			ptrs: new(pointerTracker),
-			want: keyvals{
+			want: target{1, keyvals{
 				{"Value", rawVal("1")},
 				{"Next", keyvals{
 					{"Value", rawVal("2")},
 					{"Next", keyvals{
 						{"Value", rawVal("3")},
-						{"Next", recursive{keyvals{
-							{"Value", rawVal("1")},
-							{"Next", rawVal("...")},
-						}}},
+						{"Next", ref{1}},
 					}},
 				}},
-			},
-		},
-		{
-			desc: "circular list context=3",
-			raw:  circular(3),
-			cfg: &Config{
-				TrackPointers:    true,
-				RecursiveContext: 3,
-			},
-			ptrs: new(pointerTracker),
-			want: keyvals{
-				{"Value", rawVal("1")},
-				{"Next", keyvals{
-					{"Value", rawVal("2")},
-					{"Next", keyvals{
-						{"Value", rawVal("3")},
-						{"Next", recursive{keyvals{
-							{"Value", rawVal("1")},
-							{"Next", keyvals{
-								{"Value", rawVal("2")},
-								{"Next", keyvals{
-									{"Value", rawVal("3")},
-									{"Next", rawVal("...")},
-								}},
-							}},
-						}}},
-					}},
-				}},
-			},
+			}},
 		},
 	}
 
@@ -312,12 +280,12 @@ func BenchmarkVal2node(b *testing.B) {
 		},
 		{
 			desc: "track/struct",
-			cfg:  Recursively,
+			cfg:  CycleTracker,
 			raw:  struct{ Zaphod, Ford string }{"beeblebrox", "prefect"},
 		},
 		{
 			desc: "track/map",
-			cfg:  Recursively,
+			cfg:  CycleTracker,
 			raw: map[[2]int]string{
 				[2]int{-1, 2}: "school",
 				[2]int{0, 0}:  "origin",
@@ -326,17 +294,17 @@ func BenchmarkVal2node(b *testing.B) {
 		},
 		{
 			desc: "circlist/small",
-			cfg:  Recursively,
+			cfg:  CycleTracker,
 			raw:  circular(3),
 		},
 		{
 			desc: "circlist/med",
-			cfg:  Recursively,
+			cfg:  CycleTracker,
 			raw:  circular(300),
 		},
 		{
 			desc: "circlist/large",
-			cfg:  Recursively,
+			cfg:  CycleTracker,
 			raw:  circular(3000),
 		},
 	}
@@ -348,7 +316,7 @@ func BenchmarkVal2node(b *testing.B) {
 				ref := &reflector{
 					Config: bench.cfg,
 				}
-				if bench.cfg.TrackPointers {
+				if bench.cfg.TrackCycles {
 					ref.pointerTracker = new(pointerTracker)
 				}
 				ref.val2node(reflect.ValueOf(bench.raw))

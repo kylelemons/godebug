@@ -16,6 +16,7 @@ package pretty
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -173,4 +174,29 @@ func (r recursive) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 	}
 	w.WriteString(tag)
 	r.value.WriteTo(w, indent, cfg)
+}
+
+type ref struct {
+	id int
+}
+
+func (r ref) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
+	fmt.Fprintf(w, "... ref#%d", r.id)
+}
+
+type target struct {
+	id    int
+	value node
+}
+
+func (t target) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
+	tag := fmt.Sprintf("(ref#%d) ", t.id)
+	switch {
+	case cfg.Diffable, cfg.Compact:
+		// no indent changes
+	default:
+		indent += strings.Repeat(" ", len(tag))
+	}
+	w.WriteString(tag)
+	t.value.WriteTo(w, indent, cfg)
 }
