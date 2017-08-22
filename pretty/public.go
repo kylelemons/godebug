@@ -69,7 +69,7 @@ type Config struct {
 
 	// If TrackCycles is enabled, pretty will detect and track
 	// self-referential structures. If a self-referential structure (aka a
-	// "recursive" value) is detected, ref# tags will be emitted.
+	// "recursive" value) is detected, numbered placeholders will be emitted.
 	//
 	// Pointer tracking is disabled by default for performance reasons.
 	TrackCycles bool

@@ -332,23 +332,23 @@ func circular(nodes int) *ListNode {
 	return recent
 }
 
-func ExamplePrint_printingWithCycles() {
+func ExamplePrint_withCycles() {
 	pretty.CycleTracker.Print(circular(3))
 
 	// Output:
-	// (ref#1) {
+	// <#1> {
 	//  Value: 1,
 	//  Next: {
 	//   Value: 2,
 	//   Next: {
 	//    Value: 3,
-	//    Next: ... ref#1,
+	//    Next: <see #1>,
 	//   },
 	//  },
 	// }
 }
 
-func ExampleConfig_Compare_withCycles() {
+func ExampleCompare_withCycles() {
 	got, want := circular(3), circular(3)
 
 	// Make the got one broken
@@ -359,14 +359,14 @@ func ExampleConfig_Compare_withCycles() {
 	// Output:
 	// Diff: (-got +want)
 	// -{
-	// +(ref#1) {
+	// +<#1> {
 	//   Value: 1,
-	// - Next: (ref#1) {
+	// - Next: <#1> {
 	// + Next: {
 	//    Value: 2,
 	//    Next: {
 	//     Value: 3,
-	//     Next: ... ref#1,
+	//     Next: <see #1>,
 	//    },
 	//   },
 	//  }

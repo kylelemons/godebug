@@ -156,28 +156,12 @@ func (l list) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
 	w.WriteByte(']')
 }
 
-type recursive struct {
-	value node // the value that we've seen before
-}
-
-func (r recursive) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
-	const tag = "(recursive:) "
-	switch {
-	case cfg.Diffable, cfg.Compact:
-		// no indent changes
-	default:
-		indent += strings.Repeat(" ", len(tag))
-	}
-	w.WriteString(tag)
-	r.value.WriteTo(w, indent, cfg)
-}
-
 type ref struct {
 	id int
 }
 
 func (r ref) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
-	fmt.Fprintf(w, "... ref#%d", r.id)
+	fmt.Fprintf(w, "<see #%d>", r.id)
 }
 
 type target struct {
@@ -186,7 +170,7 @@ type target struct {
 }
 
 func (t target) WriteTo(w *bytes.Buffer, indent string, cfg *Config) {
-	tag := fmt.Sprintf("(ref#%d) ", t.id)
+	tag := fmt.Sprintf("<#%d> ", t.id)
 	switch {
 	case cfg.Diffable, cfg.Compact:
 		// no indent changes

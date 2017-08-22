@@ -173,18 +173,18 @@ func TestWriteTo(t *testing.T) {
 				}},
 			}},
 			normal: `
-(ref#1) {Value: 1,
-         Next:  {Value: 2,
-                 Next:  {Value: 3,
-                         Next:  ... ref#1}}}`,
+<#1> {Value: 1,
+      Next:  {Value: 2,
+              Next:  {Value: 3,
+                      Next:  <see #1>}}}`,
 			diffable: `
-(ref#1) {
+<#1> {
  Value: 1,
  Next: {
   Value: 2,
   Next: {
    Value: 3,
-   Next: ... ref#1,
+   Next: <see #1>,
   },
  },
 }`,
