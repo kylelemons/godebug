@@ -71,10 +71,7 @@ type Config struct {
 	// self-referential structures. If a self-referential structure (aka a
 	// "recursive" value) is detected, ref# tags will be emitted.
 	//
-	// Pointer tracking is disabled by default for performance reasons.  If you
-	// turn it on, however, be aware that the results of Compare are limited to
-	// comparing only RecursiveContext, which may not be enough to perfectly
-	// guarantee "deep equality" if the context does not contain enough signal.
+	// Pointer tracking is disabled by default for performance reasons.
 	TrackCycles bool
 }
 
