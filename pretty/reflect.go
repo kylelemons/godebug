@@ -173,7 +173,7 @@ func (r *reflector) val2node(val reflect.Value) node {
 		pairs := make([]mapPair, 0, len(keys))
 		for _, key := range keys {
 			pairs = append(pairs, mapPair{
-				key:   compactString(r.val2node(key)), // can't be cyclic
+				key:   new(formatter).compactString(r.val2node(key)), // can't be cyclic
 				value: val.MapIndex(key),
 			})
 		}

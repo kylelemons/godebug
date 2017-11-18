@@ -115,7 +115,7 @@ func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
-		ref.val2node(reflect.ValueOf(val)).WriteTo(buf, "", cfg)
+		newFormatter(cfg, buf).write(ref.val2node(reflect.ValueOf(val)))
 	}
 }
 

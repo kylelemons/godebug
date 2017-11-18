@@ -20,7 +20,7 @@ import (
 	"testing"
 )
 
-func TestWriteTo(t *testing.T) {
+func TestFormat(t *testing.T) {
 	tests := []struct {
 		desc string
 		node node
@@ -189,20 +189,46 @@ func TestWriteTo(t *testing.T) {
  },
 }`,
 		},
+		{
+			desc: "print in order",
+			node: list{
+				target{2, keyvals{
+					{"Next", ref{1}},
+				}},
+				target{1, keyvals{
+					{"Next", ref{2}},
+				}},
+			},
+			normal: `
+[<#1> {Next: <see #2>},
+ <#2> {Next: <see #1>}]`,
+			diffable: `
+[
+ <#1> {
+  Next: <see #2>,
+ },
+ <#2> {
+  Next: <see #1>,
+ },
+]`,
+		},
 	}
 
+	normal := &Config{}
+	diffable := &Config{Diffable: true}
 	for _, test := range tests {
 		// For readability, we have a newline that won't be there in the output
 		test.normal = strings.TrimPrefix(test.normal, "\n")
 		test.diffable = strings.TrimPrefix(test.diffable, "\n")
 
 		buf := new(bytes.Buffer)
-		test.node.WriteTo(buf, "", &Config{})
+		newFormatter(normal, buf).write(test.node)
 		if got, want := buf.String(), test.normal; got != want {
 			t.Errorf("%s: normal rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
 		buf.Reset()
-		test.node.WriteTo(buf, "", &Config{Diffable: true})
+
+		newFormatter(diffable, buf).write(test.node)
 		if got, want := buf.String(), test.diffable; got != want {
 			t.Errorf("%s: diffable rendendered incorrectly\ngot:\n%s\nwant:\n%s", test.desc, got, want)
 		}
@@ -262,7 +288,7 @@ func TestCompactString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := compactString(test.node), test.compact; got != want {
+		if got, want := new(formatter).compactString(test.node), test.compact; got != want {
 			t.Errorf("%#v: compact = %q, want %q", test.node, got, want)
 		}
 	}
@@ -306,9 +332,9 @@ func TestShortList(t *testing.T) {
 
 	for _, test := range tests {
 		buf := new(bytes.Buffer)
-		test.node.WriteTo(buf, "", cfg)
+		newFormatter(cfg, buf).write(test.node)
 		if got, want := buf.String(), test.want; got != want {
-			t.Errorf("%#v: got:\n%s\nwant:\n%s", test.node, got, want)
+			t.Errorf("%#v:\ngot:\n%s\nwant:\n%s", test.node, got, want)
 		}
 	}
 }
@@ -329,13 +355,13 @@ var benchNode = keyvals{
 
 func benchOpts(b *testing.B, cfg *Config) {
 	buf := new(bytes.Buffer)
-	benchNode.WriteTo(buf, "", cfg)
+	newFormatter(cfg, buf).write(benchNode)
 	b.SetBytes(int64(buf.Len()))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		buf.Reset()
-		benchNode.WriteTo(buf, "", cfg)
+		newFormatter(cfg, buf).write(benchNode)
 	}
 }
 
