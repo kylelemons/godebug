@@ -88,6 +88,9 @@ func (c *Config) val2node(val reflect.Value) node {
 			if !c.IncludeUnexported && sf.PkgPath != "" {
 				continue
 			}
+			if c.SkipStructField != nil && c.SkipStructField(typ, sf) {
+				continue
+			}
 			field := val.Field(i)
 			if c.SkipZeroFields && isZeroVal(field) {
 				continue

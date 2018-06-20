@@ -40,6 +40,10 @@ type Config struct {
 	PrintTextMarshalers bool // Call MarshalText on an encoding.TextMarshaler
 	SkipZeroFields      bool // Skip struct fields that have a zero value.
 
+	// If not nil, this will be called for each struct field to determine if
+	// it should be formatted or skipped.
+	SkipStructField     func(structType reflect.Type, field reflect.StructField) bool
+
 	// Output transforms
 	ShortList int // Maximum character length for short lists if nonzero.
 
