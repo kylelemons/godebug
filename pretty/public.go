@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/kylelemons/godebug/diff"
+	"github.com/allamand/godebug/diff"
 )
 
 // A Config represents optional configuration parameters for formatting.
