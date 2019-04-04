@@ -59,6 +59,24 @@ func Diff(A, B string) string {
 	return strings.TrimRight(buf.String(), "\n")
 }
 
+func OnlyDiff(A, B string) string {
+	aLines := strings.Split(A, "\n")
+	bLines := strings.Split(B, "\n")
+
+	chunks := DiffChunks(aLines, bLines)
+
+	buf := new(bytes.Buffer)
+	for _, c := range chunks {
+		for _, line := range c.Added {
+			fmt.Fprintf(buf, "+%s\n", line)
+		}
+		for _, line := range c.Deleted {
+			fmt.Fprintf(buf, "-%s\n", line)
+		}
+	}
+	return strings.TrimRight(buf.String(), "\n")
+}
+
 // DiffChunks uses an O(D(N+M)) shortest-edit-script algorithm
 // to compute the edits required from A to B and returns the
 // edit chunks.
