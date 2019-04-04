@@ -151,3 +151,20 @@ func (cfg *Config) Compare(a, b interface{}) string {
 	diffCfg.Diffable = true
 	return diff.Diff(cfg.Sprint(a), cfg.Sprint(b))
 }
+// Compare returns a string containing a line-by-line unified diff of the
+// values in a and b, using the CompareConfig.
+//
+// Each line in the output is prefixed with '+', '-' to indicate which
+// side it's from. Lines from the a side are marked with '-', lines from the
+// b side are marked with '+' and lines that are the same are not printed
+func CompareAndPrintDiff(a, b interface{}) string {
+	return CompareConfig.CompareAndPrintDiff(a, b)
+}
+
+// Compare returns a string containing a line-by-line unified diff of the
+// values in got and want according to the cfg.
+func (cfg *Config) CompareAndPrintDiff(a, b interface{}) string {
+	diffCfg := *cfg
+	diffCfg.Diffable = true
+	return diff.OnlyDiff(cfg.Sprint(a), cfg.Sprint(b))
+}
