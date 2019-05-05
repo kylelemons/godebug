@@ -66,6 +66,13 @@ type Config struct {
 	// method and the input will be provided as a value.  In that case,
 	// use a function that calls .String on the formal value parameter.
 	Formatter map[reflect.Type]interface{}
+
+	// If TrackCycles is enabled, pretty will detect and track
+	// self-referential structures. If a self-referential structure (aka a
+	// "recursive" value) is detected, numbered placeholders will be emitted.
+	//
+	// Pointer tracking is disabled by default for performance reasons.
+	TrackCycles bool
 }
 
 // Default Config objects
@@ -88,14 +95,27 @@ var (
 	DefaultConfig = &Config{
 		Formatter: DefaultFormatter,
 	}
+
+	// CycleTracker is a convenience config for formatting and comparing recursive structures.
+	CycleTracker = &Config{
+		Diffable:    true,
+		Formatter:   DefaultFormatter,
+		TrackCycles: true,
+	}
 )
 
 func (cfg *Config) fprint(buf *bytes.Buffer, vals ...interface{}) {
+	ref := &reflector{
+		Config: cfg,
+	}
+	if cfg.TrackCycles {
+		ref.pointerTracker = new(pointerTracker)
+	}
 	for i, val := range vals {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
-		cfg.val2node(reflect.ValueOf(val)).WriteTo(buf, "", cfg)
+		newFormatter(cfg, buf).write(ref.val2node(reflect.ValueOf(val)))
 	}
 }
 

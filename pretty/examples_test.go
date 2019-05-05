@@ -308,3 +308,66 @@ func ExampleCompare_debugging() {
 	// + Stolen: false,
 	//  }
 }
+
+type ListNode struct {
+	Value int
+	Next  *ListNode
+}
+
+func circular(nodes int) *ListNode {
+	final := &ListNode{
+		Value: nodes,
+	}
+	final.Next = final
+
+	recent := final
+	for i := nodes - 1; i > 0; i-- {
+		n := &ListNode{
+			Value: i,
+			Next:  recent,
+		}
+		final.Next = n
+		recent = n
+	}
+	return recent
+}
+
+func ExamplePrint_withCycles() {
+	pretty.CycleTracker.Print(circular(3))
+
+	// Output:
+	// <#1> {
+	//  Value: 1,
+	//  Next: {
+	//   Value: 2,
+	//   Next: {
+	//    Value: 3,
+	//    Next: <see #1>,
+	//   },
+	//  },
+	// }
+}
+
+func ExampleCompare_withCycles() {
+	got, want := circular(3), circular(3)
+
+	// Make the got one broken
+	got.Next.Next.Next = got.Next
+
+	fmt.Printf("Diff: (-got +want)\n%s", pretty.CycleTracker.Compare(got, want))
+
+	// Output:
+	// Diff: (-got +want)
+	// -{
+	// +<#1> {
+	//   Value: 1,
+	// - Next: <#1> {
+	// + Next: {
+	//    Value: 2,
+	//    Next: {
+	//     Value: 3,
+	//     Next: <see #1>,
+	//    },
+	//   },
+	//  }
+}
