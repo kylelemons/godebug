@@ -59,6 +59,7 @@ Other Packages
 --------------
 
 If `godebug/pretty` is not granular enough, I highly recommend
-checking out [go-spew][spew].
+checking out [cmp][cmp] or [go-spew][spew].
 
+[cmp]: https://godoc.org/github.com/google/go-cmp/cmp
 [spew]: http://godoc.org/github.com/davecgh/go-spew/spew
