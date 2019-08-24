@@ -16,7 +16,6 @@
 package diff
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 )
@@ -41,10 +40,14 @@ func (c *Chunk) empty() bool {
 func Diff(A, B string) string {
 	aLines := strings.Split(A, "\n")
 	bLines := strings.Split(B, "\n")
+	return Render(DiffChunks(aLines, bLines))
+}
 
-	chunks := DiffChunks(aLines, bLines)
-
-	buf := new(bytes.Buffer)
+// Render renders the slice of chunks into a representation that prefixes
+// the lines with '+', '-', or ' ' depending on whether the line was added,
+// removed, or equal (respectively).
+func Render(chunks []Chunk) string {
+	buf := new(strings.Builder)
 	for _, c := range chunks {
 		for _, line := range c.Added {
 			fmt.Fprintf(buf, "+%s\n", line)

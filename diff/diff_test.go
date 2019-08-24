@@ -135,6 +135,68 @@ func TestDiff(t *testing.T) {
 	}
 }
 
+func TestRender(t *testing.T) {
+	tests := []struct {
+		desc   string
+		chunks []Chunk
+		out    string
+	}{
+		{
+			desc: "ordering",
+			chunks: []Chunk{
+				{
+					Added:   []string{"1"},
+					Deleted: []string{"2"},
+					Equal:   []string{"3"},
+				},
+				{
+					Added:   []string{"4"},
+					Deleted: []string{"5"},
+				},
+			},
+			out: strings.TrimSpace(`
++1
+-2
+ 3
++4
+-5
+			`),
+		},
+		{
+			desc: "only_added",
+			chunks: []Chunk{
+				{
+					Added: []string{"1"},
+				},
+			},
+			out: strings.TrimSpace(`
++1
+			`),
+		},
+		{
+			desc: "only_deleted",
+			chunks: []Chunk{
+				{
+					Deleted: []string{"1"},
+				},
+			},
+			out: strings.TrimSpace(`
+-1
+			`),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			if got, want := Render(test.chunks), test.out; got != want {
+				t.Errorf("Render(%q):", test.chunks)
+				t.Errorf("GOT\n%s", got)
+				t.Errorf("WANT\n%s", want)
+			}
+		})
+	}
+}
+
 func ExampleDiff() {
 	constitution := strings.TrimSpace(`
 We the People of the United States, in Order to form a more perfect Union,
