@@ -16,6 +16,7 @@ package pretty
 
 import (
 	"testing"
+	"time"
 )
 
 func TestDiff(t *testing.T) {
@@ -124,5 +125,31 @@ func TestSkipZeroFields(t *testing.T) {
 			t.Errorf("  got:  %q", got)
 			t.Errorf("  want: %q", want)
 		}
+	}
+}
+
+func TestRegressions(t *testing.T) {
+	tests := []struct {
+		issue  string
+		config *Config
+		value  interface{}
+		want   string
+	}{
+		{
+			issue: "kylelemons/godebug#13",
+			config: &Config{
+				PrintStringers: true,
+			},
+			value: struct{ Day *time.Weekday }{},
+			want:  "{Day: nil}",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.issue, func(t *testing.T) {
+			if got, want := test.config.Sprint(test.value), test.want; got != want {
+				t.Errorf("%#v.Sprint(%#v) = %q, want %q", test.config, test.value, got, want)
+			}
+		})
 	}
 }

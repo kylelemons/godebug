@@ -147,7 +147,7 @@ func TestVal2node(t *testing.T) {
 			},
 		},
 		{
-			desc: "struct w/ IncludeUnexported",
+			desc: "struct with IncludeUnexported",
 			raw:  struct{ Zaphod, Ford, foo string }{"beeblebrox", "prefect", "GOOD"},
 			cfg: &Config{
 				IncludeUnexported: true,
@@ -167,7 +167,7 @@ func TestVal2node(t *testing.T) {
 			},
 		},
 		{
-			desc: "time w/ nil Formatter",
+			desc: "time with nil Formatter",
 			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
 			cfg: &Config{
 				PrintStringers: true,
@@ -180,7 +180,7 @@ func TestVal2node(t *testing.T) {
 			},
 		},
 		{
-			desc: "time w/ PrintTextMarshalers",
+			desc: "time with PrintTextMarshalers",
 			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
 			cfg: &Config{
 				PrintTextMarshalers: true,
@@ -190,13 +190,43 @@ func TestVal2node(t *testing.T) {
 			},
 		},
 		{
-			desc: "time w/ PrintStringers",
+			desc: "time with PrintStringers",
 			raw:  struct{ Date time.Time }{time.Unix(1234567890, 0).UTC()},
 			cfg: &Config{
 				PrintStringers: true,
 			},
 			want: keyvals{
 				{"Date", stringVal("2009-02-13 23:31:30 +0000 UTC")},
+			},
+		},
+		{
+			desc: "nil with PrintStringers",
+			raw:  struct{ Date *time.Time }{},
+			cfg: &Config{
+				PrintStringers: true,
+			},
+			want: keyvals{
+				{"Date", rawVal("nil")},
+			},
+		},
+		{
+			desc: "nilIsFine with PrintStringers",
+			raw:  struct{ V *nilIsFine }{},
+			cfg: &Config{
+				PrintStringers: true,
+			},
+			want: keyvals{
+				{"V", stringVal("<nil is fine>")},
+			},
+		},
+		{
+			desc: "nilIsFine non-nil with PrintStringers",
+			raw:  struct{ V *nilIsFine }{V: new(nilIsFine)},
+			cfg: &Config{
+				PrintStringers: true,
+			},
+			want: keyvals{
+				{"V", stringVal("<not nil is fine>")},
 			},
 		},
 		{
@@ -266,19 +296,19 @@ func TestVal2node(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		ref := &reflector{
-			Config: test.cfg,
-		}
-		if test.cfg.TrackCycles {
-			ref.pointerTracker = new(pointerTracker)
-		}
-		if got, want := ref.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
-			t.Run(test.desc, func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
+			ref := &reflector{
+				Config: test.cfg,
+			}
+			if test.cfg.TrackCycles {
+				ref.pointerTracker = new(pointerTracker)
+			}
+			if got, want := ref.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
 				t.Errorf(" got %#v", got)
 				t.Errorf("want %#v", want)
 				t.Errorf("Diff: (-got +want)\n%s", Compare(got, want))
-			})
-		}
+			}
+		})
 	}
 }
 
@@ -414,4 +444,13 @@ func BenchmarkVal2node(b *testing.B) {
 			}
 		})
 	}
+}
+
+type nilIsFine struct{}
+
+func (n *nilIsFine) String() string {
+	if n == nil {
+		return "<nil is fine>"
+	}
+	return "<not nil is fine>"
 }

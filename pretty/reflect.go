@@ -115,12 +115,26 @@ func (r *reflector) follow(ptr uintptr, val reflect.Value) node {
 	return n
 }
 
-func (r *reflector) val2node(val reflect.Value) node {
+func (r *reflector) val2node(val reflect.Value) (ret node) {
 	if !val.IsValid() {
 		return rawVal("nil")
 	}
 
 	if val.CanInterface() {
+		// Detect panics in calling functions on nil pointers.
+		//
+		// We still want to call them, as it's possible that a nil value is
+		// valid for the particular type.
+		//
+		// If we detect a panic, just return raw nil.
+		if val.Kind() == reflect.Ptr && val.IsNil() {
+			defer func() {
+				if r := recover(); r != nil {
+					ret = rawVal("nil")
+				}
+			}()
+		}
+
 		v := val.Interface()
 		if formatter, ok := r.Formatter[val.Type()]; ok {
 			if formatter != nil {
