@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/allamand/godebug/diff"
+	"github.com/kylelemons/godebug/diff"
 )
 
 // A Config represents optional configuration parameters for formatting.
@@ -151,6 +151,7 @@ func (cfg *Config) Compare(a, b interface{}) string {
 	diffCfg.Diffable = true
 	return diff.Diff(cfg.Sprint(a), cfg.Sprint(b))
 }
+
 // Compare returns a string containing a line-by-line unified diff of the
 // values in a and b, using the CompareConfig.
 //
