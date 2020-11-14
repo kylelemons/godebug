@@ -20,6 +20,21 @@ import (
 	"strings"
 )
 
+type options struct {
+	transform func(string) string
+}
+
+// An Option will change the behavior of the diff.
+type Option func(*options)
+
+// The Transform option alters lines before comparing.
+// You can use it to ignore certain differences.
+func Transform(tr func(string) string) Option {
+	return func(in *options) {
+		in.transform = tr
+	}
+}
+
 // Chunk represents a piece of the diff.  A chunk will not have both added and
 // deleted lines.  Equal lines are always after any added or deleted lines.
 // A Chunk may or may not have any lines in it, especially for the first or last
@@ -37,10 +52,10 @@ func (c *Chunk) empty() bool {
 // Diff returns a string containing a line-by-line unified diff of the linewise
 // changes required to make A into B.  Each line is prefixed with '+', '-', or
 // ' ' to indicate if it should be added, removed, or is correct respectively.
-func Diff(A, B string) string {
+func Diff(A, B string, opts ...Option) string {
 	aLines := strings.Split(A, "\n")
 	bLines := strings.Split(B, "\n")
-	return Render(DiffChunks(aLines, bLines))
+	return Render(DiffChunks(aLines, bLines, opts...))
 }
 
 // Render renders the slice of chunks into a representation that prefixes
@@ -65,11 +80,30 @@ func Render(chunks []Chunk) string {
 // DiffChunks uses an O(D(N+M)) shortest-edit-script algorithm
 // to compute the edits required from A to B and returns the
 // edit chunks.
-func DiffChunks(a, b []string) []Chunk {
+func DiffChunks(a, b []string, opts ...Option) []Chunk {
 	// algorithm: http://www.xmailserver.org/diff2.pdf
+
+	options := &options{}
+	for _, o := range opts {
+		o(options)
+	}
 
 	// We'll need these quantities a lot.
 	alen, blen := len(a), len(b) // M, N
+
+	applyTransform := func(in []string) []string {
+		if options.transform == nil {
+			return in
+		}
+		out := make([]string, len(in))
+		for i, s := range in {
+			out[i] = options.transform(s)
+		}
+		return out
+	}
+
+	aa := applyTransform(a)
+	bb := applyTransform(b)
 
 	// At most, it will require len(a) deletions and len(b) additions
 	// to transform a into b.
@@ -125,7 +159,7 @@ dLoop:
 			// On diagonal d, we can compute bidx from aidx.
 			bidx := aidx - diag // y
 			// See how far we can go on this diagonal before we find a difference.
-			for aidx < alen && bidx < blen && a[aidx] == b[bidx] {
+			for aidx < alen && bidx < blen && aa[aidx] == bb[bidx] {
 				aidx++
 				bidx++
 			}

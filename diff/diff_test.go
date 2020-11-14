@@ -226,3 +226,31 @@ States of America.
 	//  and our Posterity, do ordain and establish this Constitution for the United
 	//  States of America.
 }
+
+func TestDiffTransform(t *testing.T) {
+	a := strings.TrimSpace(`
+10:01 Line 1
+10:01 Line 2
+10:01 Line 3
+`)
+	b := strings.TrimSpace(`
+10:15 Line 1
+10:15 Line 2a
+10:15 Line 3
+`)
+	want := ` 10:01 Line 1
+-10:01 Line 2
++10:15 Line 2a
+ 10:01 Line 3`
+	got := Diff(a, b, Transform(
+		func(in string) string {
+			if len(in) < 6 {
+				return in
+			}
+			return in[6:]
+		}))
+	if got != want {
+		t.Errorf("GOT\n%#v\n", got)
+		t.Errorf("WANT\n%#v\n", want)
+	}
+}
