@@ -75,9 +75,9 @@ func TestVal2nodeDefault(t *testing.T) {
 		{
 			desc: "map of [2]int",
 			raw: map[[2]int]string{
-				[2]int{-1, 2}: "school",
-				[2]int{0, 0}:  "origin",
-				[2]int{1, 3}:  "home",
+				{-1, 2}: "school",
+				{0, 0}:  "origin",
+				{1, 3}:  "home",
 			},
 			want: keyvals{
 				{"[-1,2]", stringVal("school")},
@@ -306,7 +306,8 @@ func TestVal2node(t *testing.T) {
 			if got, want := ref.val2node(reflect.ValueOf(test.raw)), test.want; !reflect.DeepEqual(got, want) {
 				t.Errorf(" got %#v", got)
 				t.Errorf("want %#v", want)
-				t.Errorf("Diff: (-got +want)\n%s", Compare(got, want))
+				result, _ := Compare(got, want)
+				t.Errorf("Diff: (-got +want)\n%s", result)
 			}
 		})
 	}
@@ -380,9 +381,9 @@ func BenchmarkVal2node(b *testing.B) {
 			desc: "map",
 			cfg:  DefaultConfig,
 			raw: map[[2]int]string{
-				[2]int{-1, 2}: "school",
-				[2]int{0, 0}:  "origin",
-				[2]int{1, 3}:  "home",
+				{-1, 2}: "school",
+				{0, 0}:  "origin",
+				{1, 3}:  "home",
 			},
 		},
 		{
@@ -394,9 +395,9 @@ func BenchmarkVal2node(b *testing.B) {
 			desc: "track/map",
 			cfg:  CycleTracker,
 			raw: map[[2]int]string{
-				[2]int{-1, 2}: "school",
-				[2]int{0, 0}:  "origin",
-				[2]int{1, 3}:  "home",
+				{-1, 2}: "school",
+				{0, 0}:  "origin",
+				{1, 3}:  "home",
 			},
 		},
 		{

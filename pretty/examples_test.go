@@ -37,10 +37,10 @@ func ExampleConfig_Sprint() {
 			"player2": {0, -1},
 		},
 		Obstacles: map[Pair]string{
-			Pair{0, 0}: "rock",
-			Pair{2, 1}: "pond",
-			Pair{1, 1}: "stream",
-			Pair{0, 1}: "stream",
+			{0, 0}: "rock",
+			{2, 1}: "pond",
+			{1, 1}: "stream",
+			{0, 1}: "stream",
 		},
 	}
 
@@ -220,7 +220,7 @@ func ExampleCompare_testing() {
 
 	for _, test := range tests {
 		AddCrew(test.before, test.name, test.title)
-		if diff := pretty.Compare(test.before, test.after); diff != "" {
+		if diff, _ := pretty.Compare(test.before, test.after); diff != "" {
 			t.Errorf("%s: post-AddCrew diff: (-got +want)\n%s", test.desc, diff)
 		}
 	}
@@ -306,7 +306,7 @@ func ExampleCompare_debugging() {
 	//   Androids: 1,
 	// - Stolen: true,
 	// + Stolen: false,
-	//  }
+	//  } 0.3
 }
 
 type ListNode struct {
@@ -354,7 +354,8 @@ func ExampleCompare_withCycles() {
 	// Make the got one broken
 	got.Next.Next.Next = got.Next
 
-	fmt.Printf("Diff: (-got +want)\n%s", pretty.CycleTracker.Compare(got, want))
+	result, _ := pretty.CycleTracker.Compare(got, want)
+	fmt.Printf("Diff: (-got +want)\n%s", result)
 
 	// Output:
 	// Diff: (-got +want)

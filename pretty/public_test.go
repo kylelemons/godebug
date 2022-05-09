@@ -64,7 +64,8 @@ func TestDiff(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if got, want := Compare(test.got, test.want), test.diff; got != want {
+		got, _ := Compare(test.got, test.want)
+		if want := test.diff; got != want {
 			t.Errorf("%s:", test.desc)
 			t.Errorf("  got:  %q", got)
 			t.Errorf("  want: %q", want)
@@ -120,7 +121,8 @@ func TestSkipZeroFields(t *testing.T) {
 	cfg.SkipZeroFields = true
 
 	for _, test := range tests {
-		if got, want := cfg.Compare(test.got, test.want), test.diff; got != want {
+		got, _ := cfg.Compare(test.got, test.want)
+		if want := test.diff; got != want {
 			t.Errorf("%s:", test.desc)
 			t.Errorf("  got:  %q", got)
 			t.Errorf("  want: %q", want)

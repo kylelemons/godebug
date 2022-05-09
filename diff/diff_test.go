@@ -23,30 +23,36 @@ import (
 
 func TestDiff(t *testing.T) {
 	tests := []struct {
-		desc   string
-		A, B   []string
-		chunks []Chunk
+		desc           string
+		A, B           []string
+		chunks         []Chunk
+		diffPercentage float64
 	}{
 		{
-			desc: "nil",
+			desc:           "nil",
+			diffPercentage: 1,
 		},
 		{
-			desc: "empty",
-			A:    []string{},
-			B:    []string{},
+			desc:           "empty",
+			A:              []string{},
+			B:              []string{},
+			diffPercentage: 1,
 		},
 		{
-			desc: "same",
-			A:    []string{"foo"},
-			B:    []string{"foo"},
+			desc:           "same",
+			A:              []string{"foo"},
+			B:              []string{"foo"},
+			diffPercentage: 1,
 		},
 		{
-			desc: "a empty",
-			A:    []string{},
+			desc:           "a empty",
+			A:              []string{},
+			diffPercentage: 1,
 		},
 		{
-			desc: "b empty",
-			B:    []string{},
+			desc:           "b empty",
+			B:              []string{},
+			diffPercentage: 1,
 		},
 		{
 			desc: "b nil",
@@ -54,6 +60,7 @@ func TestDiff(t *testing.T) {
 			chunks: []Chunk{
 				0: {Deleted: []string{"foo"}},
 			},
+			diffPercentage: 1,
 		},
 		{
 			desc: "a nil",
@@ -61,6 +68,7 @@ func TestDiff(t *testing.T) {
 			chunks: []Chunk{
 				0: {Added: []string{"foo"}},
 			},
+			diffPercentage: 1,
 		},
 		{
 			desc: "start with change",
@@ -70,6 +78,7 @@ func TestDiff(t *testing.T) {
 				0: {Deleted: []string{"a"}},
 				1: {Added: []string{"A"}, Equal: []string{"b", "c"}},
 			},
+			diffPercentage: 1.0 / 3,
 		},
 		{
 			desc: "constitution",
@@ -109,12 +118,41 @@ func TestDiff(t *testing.T) {
 					},
 				},
 			},
+			diffPercentage: 0.2,
+		},
+		{
+			desc: "real case",
+			A: []string{
+				`Street: "26642 TOWNE CENTRE DRIVE ",`,
+				`Price: "$81,500",`,
+			},
+			B: []string{
+				`Street: "26642 TOWNE CENTRE DRIVE",`,
+				`Price: "$81,500",`,
+			},
+			chunks: []Chunk{
+				0: {
+					Deleted: []string{
+						`Street: "26642 TOWNE CENTRE DRIVE ",`,
+					},
+				},
+				1: {
+					Added: []string{
+						`Street: "26642 TOWNE CENTRE DRIVE",`,
+					},
+					Equal: []string{
+						`Price: "$81,500",`,
+					},
+				},
+			},
+			diffPercentage: 0.5,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got := DiffChunks(test.A, test.B)
+			got, _ := DiffChunks(test.A, test.B)
+
 			if got, want := len(got), len(test.chunks); got != want {
 				t.Errorf("edit distance = %v, want %v", got-1, want-1)
 				return
@@ -224,5 +262,5 @@ States of America.
 	// -and secure the Blessings of Liberty to ourselves
 	// +promote the general Welfare, and secure the Blessings of Liberty to ourselves
 	//  and our Posterity, do ordain and establish this Constitution for the United
-	//  States of America.
+	//  States of America. 0.2727272727272727
 }
