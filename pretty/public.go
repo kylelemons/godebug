@@ -154,7 +154,8 @@ func (cfg *Config) Fprint(w io.Writer, vals ...interface{}) (n int64, err error)
 }
 
 // Compare returns a string containing a line-by-line unified diff of the
-// values in a and b, using the CompareConfig.
+// values in a and b, using the CompareConfig and a float64 containing the
+// ratio of differences.
 //
 // Each line in the output is prefixed with '+', '-', or ' ' to indicate which
 // side it's from. Lines from the a side are marked with '-', lines from the
@@ -165,12 +166,13 @@ func (cfg *Config) Fprint(w io.Writer, vals ...interface{}) (n int64, err error)
 // such this comparison is pretty forviving.  In particular, if the types of or
 // types within in a and b are different but have the same representation,
 // Compare will not indicate any differences between them.
-func Compare(a, b interface{}) string {
+func Compare(a, b interface{}) (string, float64) {
 	return CompareConfig.Compare(a, b)
 }
 
 // Compare returns a string containing a line-by-line unified diff of the
-// values in got and want according to the cfg.
+// values in got and want according to the cfg and a float64 containing the
+// ratio of differences.
 //
 // Each line in the output is prefixed with '+', '-', or ' ' to indicate which
 // side it's from. Lines from the a side are marked with '-', lines from the
@@ -181,7 +183,7 @@ func Compare(a, b interface{}) string {
 // such this comparison is pretty forviving.  In particular, if the types of or
 // types within in a and b are different but have the same representation,
 // Compare will not indicate any differences between them.
-func (cfg *Config) Compare(a, b interface{}) string {
+func (cfg *Config) Compare(a, b interface{}) (string, float64) {
 	diffCfg := *cfg
 	diffCfg.Diffable = true
 	return diff.Diff(cfg.Sprint(a), cfg.Sprint(b))

@@ -37,10 +37,12 @@ func (c *Chunk) empty() bool {
 // Diff returns a string containing a line-by-line unified diff of the linewise
 // changes required to make A into B.  Each line is prefixed with '+', '-', or
 // ' ' to indicate if it should be added, removed, or is correct respectively.
-func Diff(A, B string) string {
+// It also returns the ratio of differences.
+func Diff(A, B string) (string, float64) {
 	aLines := strings.Split(A, "\n")
 	bLines := strings.Split(B, "\n")
-	return Render(DiffChunks(aLines, bLines))
+	chunks, diffPercentage := DiffChunks(aLines, bLines)
+	return Render(chunks), diffPercentage
 }
 
 // Render renders the slice of chunks into a representation that prefixes
@@ -64,8 +66,8 @@ func Render(chunks []Chunk) string {
 
 // DiffChunks uses an O(D(N+M)) shortest-edit-script algorithm
 // to compute the edits required from A to B and returns the
-// edit chunks.
-func DiffChunks(a, b []string) []Chunk {
+// edit chunks along with the ratio of differences.
+func DiffChunks(a, b []string) ([]Chunk, float64) {
 	// algorithm: http://www.xmailserver.org/diff2.pdf
 
 	// We'll need these quantities a lot.
@@ -76,7 +78,7 @@ func DiffChunks(a, b []string) []Chunk {
 	maxPath := alen + blen // MAX
 	if maxPath == 0 {
 		// degenerate case: two empty lists are the same
-		return nil
+		return nil, 1
 	}
 
 	// Store the endpoint of the path for diagonals.
@@ -140,9 +142,10 @@ dLoop:
 		save() // save the current path
 	}
 	if editDistance == 0 {
-		return nil
+		return nil, 1
 	}
 	chunks := make([]Chunk, editDistance+1)
+	totEquals := 0
 
 	x, y := alen, blen
 	for d := editDistance; d > 0; d-- {
@@ -169,8 +172,10 @@ dLoop:
 		} else {
 			c.Deleted = a[x0:][:1]
 		}
+
 		if xM < x1 {
 			c.Equal = a[xM:][:x1-xM]
+			totEquals += x1 - xM
 		}
 
 		x, y = x0, y0
@@ -178,12 +183,14 @@ dLoop:
 	}
 	if x > 0 {
 		chunks[0].Equal = a[:x]
+		totEquals += x
 	}
 	if chunks[0].empty() {
 		chunks = chunks[1:]
 	}
 	if len(chunks) == 0 {
-		return nil
+		return nil, 1
 	}
-	return chunks
+	totDiffs := float64(editDistance) / 2
+	return chunks, totDiffs / (totDiffs + float64(totEquals))
 }
