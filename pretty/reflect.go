@@ -155,7 +155,7 @@ func (r *reflector) val2node(val reflect.Value) (ret node) {
 
 	switch kind := val.Kind(); kind {
 	case reflect.Ptr:
-		if val.IsNil() {
+		if val.IsNil() || isZeroVal(val.Elem()) {
 			return rawVal("nil")
 		}
 		return r.follow(val.Pointer(), val.Elem())

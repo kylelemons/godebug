@@ -116,7 +116,7 @@ func TestVal2nodeDefault(t *testing.T) {
 		{
 			desc: "nil error",
 			raw:  &errNil,
-			want: rawVal("<nil>"),
+			want: rawVal("nil"),
 		},
 	}
 

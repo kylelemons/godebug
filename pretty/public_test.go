@@ -155,3 +155,32 @@ func TestRegressions(t *testing.T) {
 		})
 	}
 }
+
+func TestNilvsEmptyStruct(t *testing.T) {
+	type Bar struct {
+		Value string
+	}
+
+	type Foo struct {
+		Bar *Bar
+	}
+
+	a := Foo{
+		Bar: nil,
+	}
+
+	b := Foo{
+		Bar: &Bar{
+			Value: "",
+		},
+	}
+
+	want := ""
+	wantPercentage := 1.0
+
+	got, gotPercentage := Compare(a, b)
+	if got != want || wantPercentage != gotPercentage {
+		t.Errorf("GOT\n%#v\n%f", got, gotPercentage)
+		t.Errorf("WANT\n%#v\n%f", want, wantPercentage)
+	}
+}
