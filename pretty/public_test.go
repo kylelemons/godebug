@@ -184,3 +184,40 @@ func TestNilvsEmptyStruct(t *testing.T) {
 		t.Errorf("WANT\n%#v\n%f", want, wantPercentage)
 	}
 }
+
+func TestIgnoreMoneyFormatDifferences(t *testing.T) {
+	type example struct {
+		Price string
+	}
+
+	tests := []struct {
+		desc      string
+		got, want interface{}
+		diff      string
+	}{
+		{
+			desc: "basic struct",
+			got: example{
+				Price: "3456.00",
+			},
+			want: example{
+				Price: "$3,456.00",
+			},
+			diff: ` {
+	Price: "3456",
+ }`,
+		},
+	}
+
+	cfg := *CompareConfig
+	cfg.IgnoreMoneyFormatDifferences = true
+
+	for _, test := range tests {
+		got, _ := cfg.Compare(test.got, test.want)
+		if want := test.diff; got != want {
+			t.Errorf("%s:", test.desc)
+			t.Errorf("  got:  %q", got)
+			t.Errorf("  want: %q", want)
+		}
+	}
+}

@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 func isZeroVal(val reflect.Value) bool {
@@ -27,6 +29,18 @@ func isZeroVal(val reflect.Value) bool {
 	}
 	z := reflect.Zero(val.Type()).Interface()
 	return reflect.DeepEqual(val.Interface(), z)
+}
+
+func isCurrency(s string) bool {
+	s = removeCurrencyCharacters(s)
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
+}
+
+func removeCurrencyCharacters(s string) string {
+	s = strings.ReplaceAll(s, "$", "")
+	s = strings.ReplaceAll(s, ",", "")
+	return s
 }
 
 // pointerTracker is a helper for tracking pointer chasing to detect cycles.
@@ -165,7 +179,16 @@ func (r *reflector) val2node(val reflect.Value) (ret node) {
 		}
 		return r.val2node(val.Elem())
 	case reflect.String:
-		return stringVal(val.String())
+		s := val.String()
+
+		if r.TrimSpaceOfStrings {
+			s = strings.TrimSpace(s)
+		}
+
+		if r.IgnoreMoneyFormatDifferences && isCurrency(s) {
+			s = removeCurrencyCharacters(s)
+		}
+		return stringVal(s)
 	case reflect.Slice:
 		n := list{}
 		length := val.Len()

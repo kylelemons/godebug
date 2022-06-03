@@ -73,6 +73,14 @@ type Config struct {
 	//
 	// Pointer tracking is disabled by default for performance reasons.
 	TrackCycles bool
+
+	// If IgnoreMoneyFormatDifferences is enabled, pretty will ignore
+	// differences in the format of currency values.
+	IgnoreMoneyFormatDifferences bool
+
+	// If TrimSpaceOfStrings is enabled, pretty will trim spaces from the
+	// beginning and the end of strings.
+	TrimSpaceOfStrings bool
 }
 
 // Default Config objects
