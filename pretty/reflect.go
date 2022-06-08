@@ -28,6 +28,29 @@ func isZeroVal(val reflect.Value) bool {
 		return false
 	}
 	z := reflect.Zero(val.Type()).Interface()
+	if val.Type().Kind() == reflect.Struct {
+		typ := val.Type()
+		fields := typ.NumField()
+		for i := 0; i < fields; i++ {
+			sf := typ.Field(i)
+			if sf.Type.Kind() == reflect.Ptr || sf.Type.Kind() == reflect.Struct {
+				if !isZeroVal(val.Field(i)) {
+					return false
+				}
+			} else {
+				if !reflect.DeepEqual(val.Interface(), z) {
+					return false
+				}
+			}
+		}
+		return true
+	}
+
+	if val.Type().Kind() == reflect.Pointer {
+		if val.IsNil() || isZeroVal(val.Elem()) {
+			return true
+		}
+	}
 	return reflect.DeepEqual(val.Interface(), z)
 }
 
@@ -166,7 +189,6 @@ func (r *reflector) val2node(val reflect.Value) (ret node) {
 			}
 		}
 	}
-
 	switch kind := val.Kind(); kind {
 	case reflect.Ptr:
 		if val.IsNil() || isZeroVal(val.Elem()) {

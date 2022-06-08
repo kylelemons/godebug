@@ -25,6 +25,7 @@ import (
 func TestVal2nodeDefault(t *testing.T) {
 	err := fmt.Errorf("err")
 	var errNil error
+	var emptyString string
 
 	tests := []struct {
 		desc string
@@ -92,6 +93,18 @@ func TestVal2nodeDefault(t *testing.T) {
 				{"Zaphod", stringVal("beeblebrox")},
 				{"Ford", stringVal("prefect")},
 			},
+		},
+		{
+			desc: "complex struct",
+			raw:  &struct{ Zaphod, Ford *string }{&emptyString, nil},
+			want: rawVal("nil"),
+		},
+		{
+			desc: "complex nested struct",
+			raw: &struct {
+				EmbeddedStruct struct{ Zaphod, Ford *string }
+			}{EmbeddedStruct: struct{ Zaphod, Ford *string }{&emptyString, nil}},
+			want: rawVal("nil"),
 		},
 		{
 			desc: "int",

@@ -203,9 +203,6 @@ func TestIgnoreMoneyFormatDifferences(t *testing.T) {
 			want: example{
 				Price: "$3,456.00",
 			},
-			diff: ` {
-	Price: "3456",
- }`,
 		},
 	}
 
