@@ -46,7 +46,7 @@ func isZeroVal(val reflect.Value) bool {
 		return true
 	}
 
-	if val.Type().Kind() == reflect.Pointer {
+	if val.Type().Kind() == reflect.Ptr {
 		if val.IsNil() || isZeroVal(val.Elem()) {
 			return true
 		}
