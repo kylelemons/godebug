@@ -33,14 +33,8 @@ func isZeroVal(val reflect.Value) bool {
 		fields := typ.NumField()
 		for i := 0; i < fields; i++ {
 			sf := typ.Field(i)
-			if sf.Type.Kind() == reflect.Ptr || sf.Type.Kind() == reflect.Struct {
-				if !isZeroVal(val.Field(i)) {
-					return false
-				}
-			} else {
-				if !reflect.DeepEqual(val.Interface(), z) {
-					return false
-				}
+			if !isZeroVal(val.Field(i)) {
+				return false
 			}
 		}
 		return true
