@@ -38,9 +38,18 @@ func (c *Chunk) empty() bool {
 // changes required to make A into B.  Each line is prefixed with '+', '-', or
 // ' ' to indicate if it should be added, removed, or is correct respectively.
 func Diff(A, B string) string {
-	aLines := strings.Split(A, "\n")
-	bLines := strings.Split(B, "\n")
+	aLines := splitLines(A)
+	bLines := splitLines(B)
 	return Render(DiffChunks(aLines, bLines))
+}
+
+// splitLines splits s into lines, returning nil for an empty string
+// instead of a slice containing one empty string.
+func splitLines(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, "\n")
 }
 
 // Render renders the slice of chunks into a representation that prefixes
