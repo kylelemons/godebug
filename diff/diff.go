@@ -38,6 +38,15 @@ func (c *Chunk) empty() bool {
 // changes required to make A into B.  Each line is prefixed with '+', '-', or
 // ' ' to indicate if it should be added, removed, or is correct respectively.
 func Diff(A, B string) string {
+	if A == B {
+		return ""
+	}
+	if A == "" {
+		return Render(DiffChunks(nil, strings.Split(B, "\n")))
+	}
+	if B == "" {
+		return Render(DiffChunks(strings.Split(A, "\n"), nil))
+	}
 	aLines := strings.Split(A, "\n")
 	bLines := strings.Split(B, "\n")
 	return Render(DiffChunks(aLines, bLines))
@@ -70,6 +79,24 @@ func DiffChunks(a, b []string) []Chunk {
 
 	// We'll need these quantities a lot.
 	alen, blen := len(a), len(b) // M, N
+
+	if alen == 0 && blen == 0 {
+		return nil
+	}
+	if alen == 0 {
+		chunks := make([]Chunk, blen)
+		for i := range b {
+			chunks[i] = Chunk{Added: b[i : i+1]}
+		}
+		return chunks
+	}
+	if blen == 0 {
+		chunks := make([]Chunk, alen)
+		for i := range a {
+			chunks[i] = Chunk{Deleted: a[i : i+1]}
+		}
+		return chunks
+	}
 
 	// At most, it will require len(a) deletions and len(b) additions
 	// to transform a into b.

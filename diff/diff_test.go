@@ -63,6 +63,42 @@ func TestDiff(t *testing.T) {
 			},
 		},
 		{
+			desc: "b nil multiple",
+			A:    []string{"foo", "bar", "baz"},
+			chunks: []Chunk{
+				0: {Deleted: []string{"foo"}},
+				1: {Deleted: []string{"bar"}},
+				2: {Deleted: []string{"baz"}},
+			},
+		},
+		{
+			desc: "a nil multiple",
+			B:    []string{"foo", "bar", "baz"},
+			chunks: []Chunk{
+				0: {Added: []string{"foo"}},
+				1: {Added: []string{"bar"}},
+				2: {Added: []string{"baz"}},
+			},
+		},
+		{
+			desc: "b empty multiple",
+			A:    []string{"alpha", "beta"},
+			B:    []string{},
+			chunks: []Chunk{
+				0: {Deleted: []string{"alpha"}},
+				1: {Deleted: []string{"beta"}},
+			},
+		},
+		{
+			desc: "a empty multiple",
+			A:    []string{},
+			B:    []string{"alpha", "beta"},
+			chunks: []Chunk{
+				0: {Added: []string{"alpha"}},
+				1: {Added: []string{"beta"}},
+			},
+		},
+		{
 			desc: "start with change",
 			A:    []string{"a", "b", "c"},
 			B:    []string{"A", "b", "c"},
@@ -225,4 +261,132 @@ States of America.
 	// +promote the general Welfare, and secure the Blessings of Liberty to ourselves
 	//  and our Posterity, do ordain and establish this Constitution for the United
 	//  States of America.
+}
+
+func TestDiffEmptyInputs(t *testing.T) {
+	tests := []struct {
+		desc string
+		a, b string
+		want string
+	}{
+		{
+			desc: "both empty",
+			a:    "",
+			b:    "",
+			want: "",
+		},
+		{
+			desc: "identical non-empty",
+			a:    "alpha\nbeta",
+			b:    "alpha\nbeta",
+			want: "",
+		},
+		{
+			desc: "a empty single line",
+			a:    "",
+			b:    "hello",
+			want: "+hello",
+		},
+		{
+			desc: "b empty single line",
+			a:    "hello",
+			b:    "",
+			want: "-hello",
+		},
+		{
+			desc: "a empty multiline",
+			a:    "",
+			b:    "alpha\nbeta\ngamma",
+			want: "+alpha\n+beta\n+gamma",
+		},
+		{
+			desc: "b empty multiline",
+			a:    "alpha\nbeta\ngamma",
+			b:    "",
+			want: "-alpha\n-beta\n-gamma",
+		},
+		{
+			desc: "a empty with blank lines",
+			a:    "",
+			b:    "alpha\n\nbeta",
+			want: "+alpha\n+\n+beta",
+		},
+		{
+			desc: "b empty with blank lines",
+			a:    "alpha\n\nbeta",
+			b:    "",
+			want: "-alpha\n-\n-beta",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			got := Diff(tt.a, tt.b)
+			if got != tt.want {
+				t.Errorf("Diff(%q, %q) = %q, want %q", tt.a, tt.b, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDiffIdenticalFormatting(t *testing.T) {
+	cases := []string{
+		"",
+		"single line",
+		"line 1\nline 2\nline 3",
+		"start\n\nmiddle\n\nend",
+	}
+
+	for _, text := range cases {
+		// When A is empty, Diff should match Render(DiffChunks(nil, lines))
+		lines := strings.Split(text, "\n")
+		var expectedAdditions string
+		if text != "" {
+			expectedAdditions = Render(DiffChunks(nil, lines))
+		}
+		if got := Diff("", text); got != expectedAdditions {
+			t.Errorf("Diff(\"\", %q) = %q, want %q", text, got, expectedAdditions)
+		}
+
+		// When B is empty, Diff should match Render(DiffChunks(lines, nil))
+		var expectedDeletions string
+		if text != "" {
+			expectedDeletions = Render(DiffChunks(lines, nil))
+		}
+		if got := Diff(text, ""); got != expectedDeletions {
+			t.Errorf("Diff(%q, \"\") = %q, want %q", text, got, expectedDeletions)
+		}
+	}
+}
+
+func BenchmarkDiffEmptyInputs(b *testing.B) {
+	lines := make([]string, 1000)
+	for i := range lines {
+		lines[i] = fmt.Sprintf("line payload item %d", i)
+	}
+	text := strings.Join(lines, "\n")
+
+	b.Run("Diff A empty", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = Diff("", text)
+		}
+	})
+
+	b.Run("Diff B empty", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = Diff(text, "")
+		}
+	})
+
+	b.Run("DiffChunks A empty", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = DiffChunks(nil, lines)
+		}
+	})
+
+	b.Run("DiffChunks B empty", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = DiffChunks(lines, nil)
+		}
+	})
 }
