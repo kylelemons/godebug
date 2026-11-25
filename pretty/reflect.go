@@ -142,6 +142,9 @@ func (r *reflector) val2node(val reflect.Value) (ret node) {
 				return rawVal(res[0].Interface().(string))
 			}
 		} else {
+			if s, ok := v.(fmt.GoStringer); ok && r.PrintGoStringers {
+				return stringVal(s.GoString())
+			}
 			if s, ok := v.(fmt.Stringer); ok && r.PrintStringers {
 				return stringVal(s.String())
 			}
